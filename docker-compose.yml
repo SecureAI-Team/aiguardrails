@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: aiguardrails
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgres://app:app@db:5432/aiguardrails?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      ADMIN_TOKEN: changeme-admin
+      OIDC_ISSUER: http://localhost/issuer
+      OIDC_AUDIENCE: aiguardrails
+      OIDC_JWKS_URL: http://localhost/jwks
+      OIDC_ADMIN_ROLE: tenant_admin
+      OIDC_USER_ROLE: tenant_user
+      QWEN_API_BASE: https://dashscope.aliyuncs.com/api/v1/services/aigc/text-moderation
+      QWEN_API_TOKEN: ""
+      QWEN_MODEL: qwen-moderation
+      OUTPUT_MODE: mark
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE: http://api:8080
+        VITE_ADMIN_TOKEN: changeme-admin
+    depends_on:
+      - api
+    ports:
+      - "8081:80"
+
+volumes:
+  db_data:
+
