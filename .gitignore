@@ -27,6 +27,7 @@ frontend/npm-debug.log*
 sdk/node/node_modules
 sdk/python/.venv
 sdk/python/__pycache__
+proxy/certs
 
 # Docker/Compose artifacts
 *.pid

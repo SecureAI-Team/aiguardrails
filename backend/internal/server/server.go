@@ -72,11 +72,43 @@ func (s *Server) Handler() http.Handler {
 	return s.router
 }
 
+func cors(origins []string) func(http.Handler) http.Handler {
+	allowed := map[string]struct{}{}
+	for _, o := range origins {
+		allowed[o] = struct{}{}
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			origin := r.Header.Get("Origin")
+			if origin != "" {
+				if len(allowed) == 0 {
+					w.Header().Set("Access-Control-Allow-Origin", "*")
+				} else {
+					if _, ok := allowed["*"]; ok {
+						w.Header().Set("Access-Control-Allow-Origin", "*")
+					} else if _, ok := allowed[origin]; ok {
+						w.Header().Set("Access-Control-Allow-Origin", origin)
+					}
+				}
+				w.Header().Set("Vary", "Origin")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-App-Id, X-App-Secret")
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
+			}
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 func (s *Server) routes() {
 	r := s.router
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(cors(s.cfg.AllowedOrigins))
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))

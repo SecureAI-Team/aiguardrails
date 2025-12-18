@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"aiguardrails/internal/policy"
+	"aiguardrails/internal/audit"
 )
 
 func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
@@ -18,10 +19,12 @@ func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
 type rulesHandler struct {
 	repo      *policy.RulesRepository
 	ruleStore *policy.RuleStore
+	audit     *audit.Logger
+	auditStore *audit.Store
 }
 
 func (s *Server) registerRulesRoutes(r chi.Router) {
-	h := rulesHandler{repo: s.rulesRepo, ruleStore: s.ruleStore}
+	h := rulesHandler{repo: s.rulesRepo, ruleStore: s.ruleStore, audit: s.audit, auditStore: s.auditStore}
 	r.Get("/rules", h.listRules)
 	r.Post("/policies/{policyID}/rules/{ruleID}", h.attachRule)
 	r.Get("/policies/{policyID}/rules", h.listPolicyRules)
@@ -52,6 +55,9 @@ func (h rulesHandler) attachRule(w http.ResponseWriter, r *http.Request) {
 	if err := h.ruleStore.Attach(policyID, ruleID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	if h.audit != nil {
+		h.audit.RecordStore(h.auditStore, "rule_attached", map[string]string{"policy_id": policyID, "rule_id": ruleID})
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "attached"})
 }

@@ -33,7 +33,12 @@ func DetectDLP(text string, customTerms []string) DLPResult {
 	}
 
 	// Built-in dictionary
-	keywords := []string{"password", "ssn", "secret", "apikey", "credit card"}
+	keywords := []string{
+		"password", "ssn", "secret", "apikey", "credit card",
+		"passport", "id card", "social security", "iban", "swift",
+		"private key", "api key", "token", "secret key", "credential",
+		"confidential", "proprietary",
+	}
 	for _, k := range keywords {
 		if strings.Contains(lower, k) {
 			matches = append(matches, k)

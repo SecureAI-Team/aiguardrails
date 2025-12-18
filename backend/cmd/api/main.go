@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"time"
@@ -16,10 +17,11 @@ import (
 	"aiguardrails/internal/store"
 	"aiguardrails/internal/tenant"
 	"aiguardrails/internal/usage"
+	"aiguardrails/internal/secret"
 )
 
 func main() {
-	cfg := config.Default()
+	cfg := config.FromEnv()
 
 	db, err := store.Open(cfg.DatabaseURL)
 	if err != nil {
@@ -46,11 +48,20 @@ func main() {
 	agentGw := agent.NewGateway(policyEng, firewall)
 	ragSec := rag.NewSecurity(policyEng)
 	usageMeter := usage.NewMeter()
-	rateLimiter := usage.NewRateLimiter(redisClient)
+	rateLimiter := usage.NewRateLimiter(redisClient, cfg.RedisNamespace)
 	auditLog := audit.NewLogger()
 	auditStore := audit.NewStore(db)
 	if err := auditStore.Init(); err != nil {
 		log.Fatalf("audit store init error: %v", err)
+	}
+	// Secrets provider (env-based; replace with KMS/SM in production)
+	secretProv := secret.EnvProvider{}
+	// Load admin token / Qwen token from secrets if available
+	if v, err := secretProv.GetSecret(context.Background(), cfg.AdminSecretKey); err == nil {
+		cfg.AdminToken = v
+	}
+	if v, err := secretProv.GetSecret(context.Background(), cfg.QwenSecretKey); err == nil {
+		cfg.QwenAPIToken = v
 	}
 	// Load rules from filesystem (policies) and attach store
 	rulesDir := "policies"
