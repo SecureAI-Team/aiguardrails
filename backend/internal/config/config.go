@@ -34,6 +34,9 @@ type Config struct {
 	QwenRPS        int
 	QwenRetries    int
 	LLMCacheTTLMin int
+	BootUser       string
+	BootPassword   string
+	AdminJWTSecret string
 }
 
 // Default returns a minimal runnable configuration for local development.
@@ -65,6 +68,9 @@ func Default() Config {
 		QwenRPS:        5,
 		QwenRetries:    2,
 		LLMCacheTTLMin: 10,
+		BootUser:       "admin@example.com",
+		BootPassword:   "ChangeMe123!",
+		AdminJWTSecret: "changeme-jwt-secret",
 	}
 }
 
@@ -145,6 +151,15 @@ func FromEnv() Config {
 	}
 	if v := os.Getenv("OUTPUT_MODE"); v != "" {
 		cfg.OutputMode = v
+	}
+	if v := os.Getenv("ADMIN_BOOT_USER"); v != "" {
+		cfg.BootUser = v
+	}
+	if v := os.Getenv("ADMIN_BOOT_PASSWORD"); v != "" {
+		cfg.BootPassword = v
+	}
+	if v := os.Getenv("ADMIN_JWT_SECRET"); v != "" {
+		cfg.AdminJWTSecret = v
 	}
 	return cfg
 }

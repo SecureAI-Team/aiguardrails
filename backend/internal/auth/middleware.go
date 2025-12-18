@@ -13,6 +13,7 @@ const (
 	appIDKey    contextKey = "appID"
 	tenantIDKey contextKey = "tenantID"
 	adminKey    contextKey = "admin"
+	userKey     contextKey = "user"
 )
 
 // APIKeyMiddleware enforces app key/secret authentication.
@@ -77,5 +78,21 @@ func IsAdmin(ctx context.Context) bool {
 		return v
 	}
 	return false
+}
+
+// WithUser sets authenticated user context (local login).
+func WithUser(next http.Handler, user *User) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), userKey, user)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// UserFromContext returns authenticated user.
+func UserFromContext(ctx context.Context) *User {
+	if v, ok := ctx.Value(userKey).(*User); ok {
+		return v
+	}
+	return nil
 }
 

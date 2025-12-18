@@ -3,9 +3,21 @@ import axios from 'axios'
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8080',
   headers: {
-    'Content-Type': 'application/json',
-    'X-Admin-Token': import.meta.env.VITE_ADMIN_TOKEN || ''
+    'Content-Type': 'application/json'
   }
+})
+
+client.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token')
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`
+  } else {
+    const adminToken = import.meta.env.VITE_ADMIN_TOKEN || ''
+    if (adminToken) {
+      config.headers['X-Admin-Token'] = adminToken
+    }
+  }
+  return config
 })
 
 export const api = {
@@ -65,6 +77,10 @@ export const api = {
   },
   async attachRule(policyId: string, ruleId: string) {
     const res = await client.post(`/v1/policies/${policyId}/rules/${ruleId}`)
+    return res.data
+  },
+  async login(username: string, password: string) {
+    const res = await client.post('/v1/auth/login', { username, password })
     return res.data
   }
 }

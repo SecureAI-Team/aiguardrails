@@ -42,10 +42,16 @@ type Server struct {
 	capStore   *mcp.Store
 	rulesRepo  *policy.RulesRepository
 	ruleStore  *policy.RuleStore
+	userStore  *auth.UserStore
+	jwtSigner  *auth.JWTSigner
 }
 
+type ctxKey string
+
+const authRoleCtxKey ctxKey = "role"
+
 // New builds a Server with dependencies.
-func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, firewall *promptfw.Firewall, agentGw *agent.Gateway, ragSec *rag.Security, usageMeter *usage.Meter, rateLimiter *usage.RateLimiter, auditLog *audit.Logger, auditStore *audit.Store, mcpBroker *mcp.Broker, capStore *mcp.Store, rulesRepo *policy.RulesRepository, ruleStore *policy.RuleStore) *Server {
+func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, firewall *promptfw.Firewall, agentGw *agent.Gateway, ragSec *rag.Security, usageMeter *usage.Meter, rateLimiter *usage.RateLimiter, auditLog *audit.Logger, auditStore *audit.Store, mcpBroker *mcp.Broker, capStore *mcp.Store, rulesRepo *policy.RulesRepository, ruleStore *policy.RuleStore, userStore *auth.UserStore, jwtSigner *auth.JWTSigner) *Server {
 	s := &Server{
 		cfg:        cfg,
 		router:     chi.NewRouter(),
@@ -62,6 +68,8 @@ func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, f
 		capStore:   capStore,
 		rulesRepo:  rulesRepo,
 		ruleStore:  ruleStore,
+		userStore:  userStore,
+		jwtSigner:  jwtSigner,
 	}
 	s.routes()
 	return s
@@ -113,12 +121,12 @@ func (s *Server) routes() {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
+	r.Post("/v1/auth/login", s.login)
 
 	r.Route("/v1", func(r chi.Router) {
-		// Admin-scoped endpoints (platform admin via token)
+		// Admin-scoped endpoints (platform admin via token or local login)
 		r.Group(func(r chi.Router) {
-			r.Use(auth.AdminTokenMiddleware(s.cfg.AdminToken))
-			r.Use(rbac.WithRole(rbac.RolePlatformAdmin))
+			r.Use(s.adminAuth())
 			r.Post("/tenants", s.createTenant)
 			r.Get("/tenants", s.listTenants)
 
@@ -503,6 +511,37 @@ func (s *Server) allowedTenant(ctx context.Context, tenantID string) bool {
 		return true
 	}
 	return false
+}
+
+// adminAuth allows either admin token header or JWT with admin role.
+func (s *Server) adminAuth() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Admin token path
+			if r.Header.Get("X-Admin-Token") == s.cfg.AdminToken {
+				next.ServeHTTP(w, r)
+				return
+			}
+			// JWT path
+			authz := r.Header.Get("Authorization")
+			if authz == "" || !strings.HasPrefix(authz, "Bearer ") || s.jwtSigner == nil {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+			tokenStr := strings.TrimPrefix(authz, "Bearer ")
+			claims, err := s.jwtSigner.Parse(tokenStr)
+			if err != nil {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+			if claims.Role != rbac.RolePlatformAdmin && claims.Role != rbac.RoleTenantAdmin {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+			ctx := context.WithValue(r.Context(), authRoleCtxKey, claims.Role)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
 }
 
 func summarizePolicyDiff(oldP, newP *types.Policy) string {

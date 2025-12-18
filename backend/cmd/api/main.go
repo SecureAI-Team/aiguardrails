@@ -9,15 +9,17 @@ import (
 	"aiguardrails/internal/agent"
 	"aiguardrails/internal/audit"
 	"aiguardrails/internal/config"
+	"aiguardrails/internal/auth"
 	"aiguardrails/internal/mcp"
 	"aiguardrails/internal/policy"
 	"aiguardrails/internal/promptfw"
 	"aiguardrails/internal/rag"
+	"aiguardrails/internal/secret"
 	"aiguardrails/internal/server"
 	"aiguardrails/internal/store"
 	"aiguardrails/internal/tenant"
 	"aiguardrails/internal/usage"
-	"aiguardrails/internal/secret"
+	"aiguardrails/internal/rbac"
 )
 
 func main() {
@@ -63,6 +65,12 @@ func main() {
 	if v, err := secretProv.GetSecret(context.Background(), cfg.QwenSecretKey); err == nil {
 		cfg.QwenAPIToken = v
 	}
+	// User store and boot admin
+	userStore := auth.NewUserStore(db)
+	if _, err := userStore.EnsureBootUser(cfg.BootUser, cfg.BootPassword, rbac.RolePlatformAdmin); err != nil {
+		log.Printf("warning: boot user not ensured: %v", err)
+	}
+	jwtSigner := &auth.JWTSigner{Secret: []byte(cfg.AdminJWTSecret)}
 	// Load rules from filesystem (policies) and attach store
 	rulesDir := "policies"
 	rulesRepo, err := policy.NewRulesRepository(rulesDir)
@@ -71,7 +79,7 @@ func main() {
 	}
 	ruleStore := policy.NewRuleStore(db)
 
-	srv := server.New(cfg, tenantSvc, policyEng, firewall, agentGw, ragSec, usageMeter, rateLimiter, auditLog, auditStore, mcpBroker, capStore, rulesRepo, ruleStore)
+	srv := server.New(cfg, tenantSvc, policyEng, firewall, agentGw, ragSec, usageMeter, rateLimiter, auditLog, auditStore, mcpBroker, capStore, rulesRepo, ruleStore, userStore, jwtSigner)
 	log.Printf("starting API on %s", srv.Addr())
 	if err := http.ListenAndServe(srv.Addr(), srv.Handler()); err != nil {
 		log.Fatal(err)

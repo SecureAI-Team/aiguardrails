@@ -10,6 +10,7 @@
         <RouterLink to="/capabilities">Capabilities</RouterLink>
         <RouterLink to="/rules">Rules</RouterLink>
         <RouterLink to="/logs">Logs</RouterLink>
+        <RouterLink to="/login">Login</RouterLink>
       </nav>
     </header>
     <main class="content">
