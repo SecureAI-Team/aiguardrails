@@ -52,8 +52,15 @@ func main() {
 	if err := auditStore.Init(); err != nil {
 		log.Fatalf("audit store init error: %v", err)
 	}
+	// Load rules from filesystem (policies) and attach store
+	rulesDir := "policies"
+	rulesRepo, err := policy.NewRulesRepository(rulesDir)
+	if err != nil {
+		log.Printf("warning: failed to load rules: %v", err)
+	}
+	ruleStore := policy.NewRuleStore(db)
 
-	srv := server.New(cfg, tenantSvc, policyEng, firewall, agentGw, ragSec, usageMeter, rateLimiter, auditLog, auditStore, mcpBroker, capStore)
+	srv := server.New(cfg, tenantSvc, policyEng, firewall, agentGw, ragSec, usageMeter, rateLimiter, auditLog, auditStore, mcpBroker, capStore, rulesRepo, ruleStore)
 	log.Printf("starting API on %s", srv.Addr())
 	if err := http.ListenAndServe(srv.Addr(), srv.Handler()); err != nil {
 		log.Fatal(err)

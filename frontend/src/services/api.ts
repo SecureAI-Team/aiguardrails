@@ -53,6 +53,19 @@ export const api = {
   async createCapability(payload: { name: string; description: string; tags: string[] }) {
     const res = await client.post(`/v1/capabilities`, payload)
     return res.data
+  },
+  async listRules(params: { jurisdiction?: string; regulation?: string; vendor?: string; product?: string }) {
+    const search = new URLSearchParams()
+    if (params.jurisdiction) search.set('jurisdiction', params.jurisdiction)
+    if (params.regulation) search.set('regulation', params.regulation)
+    if (params.vendor) search.set('vendor', params.vendor)
+    if (params.product) search.set('product', params.product)
+    const res = await client.get(`/v1/rules?${search.toString()}`)
+    return res.data
+  },
+  async attachRule(policyId: string, ruleId: string) {
+    const res = await client.post(`/v1/policies/${policyId}/rules/${ruleId}`)
+    return res.data
   }
 }
 

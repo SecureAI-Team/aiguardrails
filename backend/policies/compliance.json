@@ -1,0 +1,59 @@
+[
+  {
+    "id": "eu-ai-act-001",
+    "name": "High-risk system transparency",
+    "jurisdiction": "EU",
+    "regulation": "EU AI Act",
+    "vendor": "",
+    "product": "",
+    "severity": "high",
+    "category": "transparency",
+    "tags": ["ai-act", "transparency", "logging"],
+    "references": ["https://eur-lex.europa.eu/ai-act"],
+    "description": "High-risk AI systems must provide clear information about system capabilities, limitations, and human oversight.",
+    "remediation": "Enforce disclosure prompts and audit logs; require human-in-the-loop controls."
+  },
+  {
+    "id": "gdpr-privacy-001",
+    "name": "PII minimization",
+    "jurisdiction": "EU",
+    "regulation": "GDPR",
+    "vendor": "",
+    "product": "",
+    "severity": "high",
+    "category": "privacy",
+    "tags": ["gdpr", "privacy", "pii"],
+    "references": ["https://gdpr-info.eu/art-5-gdpr/"],
+    "description": "Personal data collected and returned must be minimized and protected.",
+    "remediation": "Enable DLP redaction, restrict PII outputs, and log data access."
+  },
+  {
+    "id": "siemens-industrial-001",
+    "name": "Siemens PLC command safety",
+    "jurisdiction": "Global",
+    "regulation": "Industrial",
+    "vendor": "Siemens",
+    "product": "PLC",
+    "severity": "high",
+    "category": "safety",
+    "tags": ["siemens", "plc", "safety"],
+    "references": [],
+    "description": "Block unsafe PLC command generation that may stop critical processes without approval.",
+    "remediation": "Require tool allowlist, human approval, and audit for control-plane commands."
+  },
+  {
+    "id": "abb-industrial-001",
+    "name": "ABB robot motion constraints",
+    "jurisdiction": "Global",
+    "regulation": "Industrial",
+    "vendor": "ABB",
+    "product": "Robotics",
+    "severity": "high",
+    "category": "safety",
+    "tags": ["abb", "robotics", "safety"],
+    "references": [],
+    "description": "Enforce motion constraints and prevent hazardous trajectories without safety checks.",
+    "remediation": "Validate tool parameters, apply safety envelopes, log and review risky motions."
+  }
+]
+

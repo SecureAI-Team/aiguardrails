@@ -1,0 +1,38 @@
+# General
+.DS_Store
+*.log
+*.swp
+*.swo
+*.tmp
+tmp/
+
+# Env
+.env
+.env.*
+
+# Go (backend)
+backend/bin
+backend/aiguardrails
+backend/*.exe
+backend/coverage*
+
+# Node/Vite frontend
+frontend/node_modules
+frontend/dist
+frontend/.vite
+frontend/package-lock.json
+frontend/npm-debug.log*
+
+# SDKs
+sdk/node/node_modules
+sdk/python/.venv
+sdk/python/__pycache__
+
+# Docker/Compose artifacts
+*.pid
+*.tar
+
+# IDE
+.idea
+.vscode
+

@@ -5,12 +5,14 @@ import Policies from './pages/Policies.vue'
 import Logs from './pages/Logs.vue'
 import PolicyHistory from './pages/PolicyHistory.vue'
 import Capabilities from './pages/Capabilities.vue'
+import Rules from './pages/Rules.vue'
 
 const routes = [
   { path: '/', component: Tenants },
   { path: '/apps', component: Apps },
   { path: '/policies', component: Policies },
   { path: '/policy-history', component: PolicyHistory },
+  { path: '/rules', component: Rules },
   { path: '/capabilities', component: Capabilities },
   { path: '/logs', component: Logs }
 ]

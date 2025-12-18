@@ -15,6 +15,7 @@ import (
 	"aiguardrails/internal/audit"
 	"aiguardrails/internal/auth"
 	"aiguardrails/internal/config"
+	"aiguardrails/internal/mcp"
 	"aiguardrails/internal/policy"
 	"aiguardrails/internal/promptfw"
 	"aiguardrails/internal/rbac"
@@ -22,7 +23,6 @@ import (
 	"aiguardrails/internal/tenant"
 	"aiguardrails/internal/types"
 	"aiguardrails/internal/usage"
-	"aiguardrails/internal/mcp"
 )
 
 // Server wires HTTP routes to services.
@@ -40,10 +40,12 @@ type Server struct {
 	auditStore *audit.Store
 	mcp        *mcp.Broker
 	capStore   *mcp.Store
+	rulesRepo  *policy.RulesRepository
+	ruleStore  *policy.RuleStore
 }
 
 // New builds a Server with dependencies.
-func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, firewall *promptfw.Firewall, agentGw *agent.Gateway, ragSec *rag.Security, usageMeter *usage.Meter, rateLimiter *usage.RateLimiter, auditLog *audit.Logger, auditStore *audit.Store, mcpBroker *mcp.Broker, capStore *mcp.Store) *Server {
+func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, firewall *promptfw.Firewall, agentGw *agent.Gateway, ragSec *rag.Security, usageMeter *usage.Meter, rateLimiter *usage.RateLimiter, auditLog *audit.Logger, auditStore *audit.Store, mcpBroker *mcp.Broker, capStore *mcp.Store, rulesRepo *policy.RulesRepository, ruleStore *policy.RuleStore) *Server {
 	s := &Server{
 		cfg:        cfg,
 		router:     chi.NewRouter(),
@@ -58,6 +60,8 @@ func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, f
 		auditStore: auditStore,
 		mcp:        mcpBroker,
 		capStore:   capStore,
+		rulesRepo:  rulesRepo,
+		ruleStore:  ruleStore,
 	}
 	s.routes()
 	return s
@@ -114,6 +118,9 @@ func (s *Server) routes() {
 			r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Get("/tenants/{tenantID}/policies/history", s.listPolicyHistory)
 			r.With(rbac.RequirePerm(rbac.PermManageApps)).Post("/capabilities", s.createCapability)
 			r.With(rbac.RequirePerm(rbac.PermViewLogs)).Get("/audit", s.listAudit)
+			if s.rulesRepo != nil && s.ruleStore != nil {
+				r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Route("/", s.registerRulesRoutes)
+			}
 		})
 
 		// App-scoped endpoints require app credentials.

@@ -8,6 +8,7 @@
         <RouterLink to="/policies">Policies</RouterLink>
         <RouterLink to="/policy-history">Policy History</RouterLink>
         <RouterLink to="/capabilities">Capabilities</RouterLink>
+        <RouterLink to="/rules">Rules</RouterLink>
         <RouterLink to="/logs">Logs</RouterLink>
       </nav>
     </header>
