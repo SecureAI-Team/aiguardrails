@@ -4,22 +4,24 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"aiguardrails/internal/agent"
 	"aiguardrails/internal/audit"
-	"aiguardrails/internal/config"
 	"aiguardrails/internal/auth"
+	"aiguardrails/internal/config"
 	"aiguardrails/internal/mcp"
+	"aiguardrails/internal/opa"
 	"aiguardrails/internal/policy"
 	"aiguardrails/internal/promptfw"
 	"aiguardrails/internal/rag"
+	"aiguardrails/internal/rbac"
 	"aiguardrails/internal/secret"
 	"aiguardrails/internal/server"
 	"aiguardrails/internal/store"
 	"aiguardrails/internal/tenant"
 	"aiguardrails/internal/usage"
-	"aiguardrails/internal/rbac"
 )
 
 func main() {
@@ -78,8 +80,15 @@ func main() {
 		log.Printf("warning: failed to load rules: %v", err)
 	}
 	ruleStore := policy.NewRuleStore(db)
+	var opaEval *opa.Evaluator
+	if cfg.OPAEnabled {
+		opaEval, err = opa.NewFromDir(filepath.Join("backend", cfg.OPARegoPath), cfg.OPADecision, time.Duration(cfg.OPATimeoutSec)*time.Second)
+		if err != nil {
+			log.Printf("warning: opa init failed: %v", err)
+		}
+	}
 
-	srv := server.New(cfg, tenantSvc, policyEng, firewall, agentGw, ragSec, usageMeter, rateLimiter, auditLog, auditStore, mcpBroker, capStore, rulesRepo, ruleStore, userStore, jwtSigner)
+	srv := server.New(cfg, tenantSvc, policyEng, firewall, agentGw, ragSec, usageMeter, rateLimiter, auditLog, auditStore, mcpBroker, capStore, rulesRepo, ruleStore, userStore, jwtSigner, opaEval)
 	log.Printf("starting API on %s", srv.Addr())
 	if err := http.ListenAndServe(srv.Addr(), srv.Handler()); err != nil {
 		log.Fatal(err)

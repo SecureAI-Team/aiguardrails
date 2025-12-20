@@ -5,22 +5,25 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Rule represents a compliance/industry rule entry.
 type Rule struct {
-	ID          string   `json:"id"`
-	Name        string   `json:"name"`
-	Jurisdiction string  `json:"jurisdiction"` // e.g., EU
-	Regulation  string   `json:"regulation"`   // e.g., EU AI Act, GDPR
-	Vendor      string   `json:"vendor"`       // e.g., Siemens, ABB
-	Product     string   `json:"product"`
-	Severity    string   `json:"severity"`
-	Category    string   `json:"category"`
-	Tags        []string `json:"tags"`
-	References  []string `json:"references"` // URLs or clause references
-	Description string   `json:"description"`
-	Remediation string   `json:"remediation"`
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	Jurisdiction string   `json:"jurisdiction"` // e.g., EU
+	Regulation   string   `json:"regulation"`   // e.g., EU AI Act, GDPR
+	Vendor       string   `json:"vendor"`       // e.g., Siemens, ABB
+	Product      string   `json:"product"`
+	Version      string   `json:"version"`  // rule package version
+	Severity     string   `json:"severity"` // low/medium/high/critical
+	Decision     string   `json:"decision"` // block | mark (soft)
+	Category     string   `json:"category"`
+	Tags         []string `json:"tags"`
+	References   []string `json:"references"` // URLs or clause references
+	Description  string   `json:"description"`
+	Remediation  string   `json:"remediation"`
 }
 
 // RuleAttachment links rule to policy.
@@ -77,9 +80,27 @@ func (r *RulesRepository) List(filter map[string]string) []Rule {
 		if filter["product"] != "" && filter["product"] != rule.Product {
 			continue
 		}
+		if filter["severity"] != "" && !strings.EqualFold(filter["severity"], rule.Severity) {
+			continue
+		}
+		if filter["decision"] != "" && !strings.EqualFold(filter["decision"], rule.Decision) {
+			continue
+		}
+		if filter["tag"] != "" && !hasTag(rule.Tags, filter["tag"]) {
+			continue
+		}
 		out = append(out, rule)
 	}
 	return out
+}
+
+func hasTag(tags []string, tag string) bool {
+	for _, t := range tags {
+		if strings.EqualFold(t, tag) {
+			return true
+		}
+	}
+	return false
 }
 
 // Get returns rule by ID.
@@ -91,4 +112,3 @@ func (r *RulesRepository) Get(id string) (*Rule, error) {
 	}
 	return nil, errors.New("rule not found")
 }
-

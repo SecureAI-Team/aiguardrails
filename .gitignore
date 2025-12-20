@@ -9,12 +9,15 @@ tmp/
 # Env
 .env
 .env.*
+*.local
 
 # Go (backend)
 backend/bin
 backend/aiguardrails
 backend/*.exe
 backend/coverage*
+backend/coverage
+backend/tmp
 
 # Node/Vite frontend
 frontend/node_modules
@@ -22,16 +25,22 @@ frontend/dist
 frontend/.vite
 frontend/package-lock.json
 frontend/npm-debug.log*
+node_modules/
 
 # SDKs
 sdk/node/node_modules
 sdk/python/.venv
 sdk/python/__pycache__
 proxy/certs
+vendor/
 
 # Docker/Compose artifacts
 *.pid
 *.tar
+docker-compose.override.yml
+*.out
+*.pem
+*.sqlite
 
 # IDE
 .idea

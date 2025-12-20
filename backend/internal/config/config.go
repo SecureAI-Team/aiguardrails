@@ -37,6 +37,10 @@ type Config struct {
 	BootUser       string
 	BootPassword   string
 	AdminJWTSecret string
+	OPAEnabled     bool
+	OPARegoPath    string
+	OPADecision    string
+	OPATimeoutSec  int
 }
 
 // Default returns a minimal runnable configuration for local development.
@@ -71,6 +75,10 @@ func Default() Config {
 		BootUser:       "admin@example.com",
 		BootPassword:   "ChangeMe123!",
 		AdminJWTSecret: "changeme-jwt-secret",
+		OPAEnabled:     false,
+		OPARegoPath:    "opa/policies",
+		OPADecision:    "data.guardrails.allow",
+		OPATimeoutSec:  1,
 	}
 }
 
@@ -160,6 +168,18 @@ func FromEnv() Config {
 	}
 	if v := os.Getenv("ADMIN_JWT_SECRET"); v != "" {
 		cfg.AdminJWTSecret = v
+	}
+	if v := os.Getenv("OPA_ENABLED"); v != "" {
+		cfg.OPAEnabled = v == "true" || v == "1"
+	}
+	if v := os.Getenv("OPA_REGO_PATH"); v != "" {
+		cfg.OPARegoPath = v
+	}
+	if v := os.Getenv("OPA_DECISION"); v != "" {
+		cfg.OPADecision = v
+	}
+	if v := os.Getenv("OPA_TIMEOUT_SEC"); v != "" {
+		cfg.OPATimeoutSec = atoiDefault(v, cfg.OPATimeoutSec)
 	}
 	return cfg
 }

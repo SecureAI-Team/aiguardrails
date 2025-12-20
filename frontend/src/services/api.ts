@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const client = axios.create({
+export const client = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8080',
   headers: {
     'Content-Type': 'application/json'
@@ -66,12 +66,15 @@ export const api = {
     const res = await client.post(`/v1/capabilities`, payload)
     return res.data
   },
-  async listRules(params: { jurisdiction?: string; regulation?: string; vendor?: string; product?: string }) {
+  async listRules(params: { jurisdiction?: string; regulation?: string; vendor?: string; product?: string; severity?: string; decision?: string; tag?: string }) {
     const search = new URLSearchParams()
     if (params.jurisdiction) search.set('jurisdiction', params.jurisdiction)
     if (params.regulation) search.set('regulation', params.regulation)
     if (params.vendor) search.set('vendor', params.vendor)
     if (params.product) search.set('product', params.product)
+    if (params.severity) search.set('severity', params.severity)
+    if (params.decision) search.set('decision', params.decision)
+    if (params.tag) search.set('tag', params.tag)
     const res = await client.get(`/v1/rules?${search.toString()}`)
     return res.data
   },

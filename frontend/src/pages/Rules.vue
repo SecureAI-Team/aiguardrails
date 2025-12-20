@@ -1,16 +1,30 @@
 <template>
   <div>
     <h2>Rule Library</h2>
-    <form @submit.prevent="load">
+    <form @submit.prevent="load" class="filters">
       <input v-model="jurisdiction" placeholder="Jurisdiction (e.g., EU)" />
       <input v-model="regulation" placeholder="Regulation (e.g., GDPR)" />
       <input v-model="vendor" placeholder="Vendor (e.g., Siemens)" />
       <input v-model="product" placeholder="Product" />
+      <input v-model="tag" placeholder="Tag (e.g., pci, hipaa, siemens)" />
+      <select v-model="severity">
+        <option value="">Severity</option>
+        <option value="low">low</option>
+        <option value="medium">medium</option>
+        <option value="high">high</option>
+        <option value="critical">critical</option>
+      </select>
+      <select v-model="decision">
+        <option value="">Decision</option>
+        <option value="block">block</option>
+        <option value="mark">mark</option>
+      </select>
       <button :disabled="loading">Filter</button>
     </form>
     <div class="card" v-for="r in rules" :key="r.id">
       <div><strong>{{ r.name }}</strong> ({{ r.regulation }} / {{ r.jurisdiction }})</div>
       <div class="muted">Vendor: {{ r.vendor || 'N/A' }} | Product: {{ r.product || 'N/A' }}</div>
+      <div class="muted">Version: {{ r.version || 'n/a' }} | Decision: {{ r.decision || 'block' }}</div>
       <div class="muted">Severity: {{ r.severity }} | Category: {{ r.category }}</div>
       <div class="muted">Tags: {{ (r.tags || []).join(', ') }}</div>
       <div>{{ r.description }}</div>
@@ -32,6 +46,9 @@ const jurisdiction = ref('')
 const regulation = ref('')
 const vendor = ref('')
 const product = ref('')
+const tag = ref('')
+const severity = ref('')
+const decision = ref('')
 const policyId = ref('')
 const rules = ref<any[]>([])
 const loading = ref(false)
@@ -42,7 +59,10 @@ async function load() {
     jurisdiction: jurisdiction.value,
     regulation: regulation.value,
     vendor: vendor.value,
-    product: product.value
+    product: product.value,
+    tag: tag.value,
+    severity: severity.value,
+    decision: decision.value
   })
   loading.value = false
 }
@@ -69,6 +89,12 @@ onMounted(load)
   display: flex;
   gap: 8px;
   margin-top: 8px;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 </style>
 

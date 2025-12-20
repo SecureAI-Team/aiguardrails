@@ -16,6 +16,7 @@ import (
 	"aiguardrails/internal/auth"
 	"aiguardrails/internal/config"
 	"aiguardrails/internal/mcp"
+	"aiguardrails/internal/opa"
 	"aiguardrails/internal/policy"
 	"aiguardrails/internal/promptfw"
 	"aiguardrails/internal/rbac"
@@ -44,6 +45,7 @@ type Server struct {
 	ruleStore  *policy.RuleStore
 	userStore  *auth.UserStore
 	jwtSigner  *auth.JWTSigner
+	opaEval    *opa.Evaluator
 }
 
 type ctxKey string
@@ -51,7 +53,7 @@ type ctxKey string
 const authRoleCtxKey ctxKey = "role"
 
 // New builds a Server with dependencies.
-func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, firewall *promptfw.Firewall, agentGw *agent.Gateway, ragSec *rag.Security, usageMeter *usage.Meter, rateLimiter *usage.RateLimiter, auditLog *audit.Logger, auditStore *audit.Store, mcpBroker *mcp.Broker, capStore *mcp.Store, rulesRepo *policy.RulesRepository, ruleStore *policy.RuleStore, userStore *auth.UserStore, jwtSigner *auth.JWTSigner) *Server {
+func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, firewall *promptfw.Firewall, agentGw *agent.Gateway, ragSec *rag.Security, usageMeter *usage.Meter, rateLimiter *usage.RateLimiter, auditLog *audit.Logger, auditStore *audit.Store, mcpBroker *mcp.Broker, capStore *mcp.Store, rulesRepo *policy.RulesRepository, ruleStore *policy.RuleStore, userStore *auth.UserStore, jwtSigner *auth.JWTSigner, opaEval *opa.Evaluator) *Server {
 	s := &Server{
 		cfg:        cfg,
 		router:     chi.NewRouter(),
@@ -70,6 +72,7 @@ func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, f
 		ruleStore:  ruleStore,
 		userStore:  userStore,
 		jwtSigner:  jwtSigner,
+		opaEval:    opaEval,
 	}
 	s.routes()
 	return s
@@ -395,6 +398,19 @@ func (s *Server) checkPrompt(w http.ResponseWriter, r *http.Request) {
 	if tenantID == "" {
 		tenantID = auth.TenantIDFromContext(r.Context())
 	}
+	// OPA check if enabled
+	if s.opaEval != nil {
+		allow, data, err := s.opaEval.Decide(r.Context(), opa.Input{
+			TenantID: tenantID,
+			AppID:    auth.AppIDFromContext(r.Context()),
+			Mode:     "prompt_check",
+			Prompt:   req.Prompt,
+		})
+		if err == nil && !allow {
+			s.writeJSON(w, http.StatusOK, types.GuardrailResult{Allowed: false, Reason: "opa_block", Signals: []string{fmt.Sprint(data)}})
+			return
+		}
+	}
 	result := s.firewall.CheckPrompt(tenantID, req.Prompt)
 	s.writeJSON(w, http.StatusOK, result)
 }
@@ -413,6 +429,18 @@ func (s *Server) checkOutput(w http.ResponseWriter, r *http.Request) {
 	tenantID := req.TenantID
 	if tenantID == "" {
 		tenantID = auth.TenantIDFromContext(r.Context())
+	}
+	if s.opaEval != nil {
+		allow, data, err := s.opaEval.Decide(r.Context(), opa.Input{
+			TenantID: tenantID,
+			AppID:    auth.AppIDFromContext(r.Context()),
+			Mode:     "output_filter",
+			Output:   req.Output,
+		})
+		if err == nil && !allow {
+			s.writeJSON(w, http.StatusOK, types.GuardrailResult{Allowed: false, Reason: "opa_block", Signals: []string{fmt.Sprint(data)}})
+			return
+		}
 	}
 	result := s.firewall.FilterOutput(tenantID, req.Output)
 	s.writeJSON(w, http.StatusOK, result)

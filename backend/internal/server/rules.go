@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"aiguardrails/internal/policy"
 	"aiguardrails/internal/audit"
+	"aiguardrails/internal/policy"
 )
 
 func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
@@ -17,9 +17,9 @@ func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
 }
 
 type rulesHandler struct {
-	repo      *policy.RulesRepository
-	ruleStore *policy.RuleStore
-	audit     *audit.Logger
+	repo       *policy.RulesRepository
+	ruleStore  *policy.RuleStore
+	audit      *audit.Logger
 	auditStore *audit.Store
 }
 
@@ -36,6 +36,9 @@ func (h rulesHandler) listRules(w http.ResponseWriter, r *http.Request) {
 		"regulation":   r.URL.Query().Get("regulation"),
 		"vendor":       r.URL.Query().Get("vendor"),
 		"product":      r.URL.Query().Get("product"),
+		"severity":     r.URL.Query().Get("severity"),
+		"decision":     r.URL.Query().Get("decision"),
+		"tag":          r.URL.Query().Get("tag"),
 	}
 	rules := h.repo.List(filter)
 	writeJSON(w, http.StatusOK, rules)
@@ -81,4 +84,3 @@ func (h rulesHandler) listPolicyRules(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, rules)
 }
-
