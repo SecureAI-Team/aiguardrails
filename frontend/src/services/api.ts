@@ -85,6 +85,46 @@ export const api = {
   async login(username: string, password: string) {
     const res = await client.post('/v1/auth/login', { username, password })
     return res.data
+  },
+  // User management
+  async get(path: string) {
+    const res = await client.get(`/v1${path}`)
+    return res.data
+  },
+  async post(path: string, data: any) {
+    const res = await client.post(`/v1${path}`, data)
+    return res.data
+  },
+  async put(path: string, data: any) {
+    const res = await client.put(`/v1${path}`, data)
+    return res.data
+  },
+  async delete(path: string) {
+    const res = await client.delete(`/v1${path}`)
+    return res.data
+  },
+  // Tenant rules
+  async listTenantRules(tenantId: string, type?: string) {
+    const q = type ? `?type=${type}` : ''
+    const res = await client.get(`/v1/tenants/${tenantId}/rules${q}`)
+    return res.data
+  },
+  async createTenantRule(tenantId: string, rule: any) {
+    const res = await client.post(`/v1/tenants/${tenantId}/rules`, rule)
+    return res.data
+  },
+  async updateTenantRule(tenantId: string, ruleId: string, rule: any) {
+    const res = await client.put(`/v1/tenants/${tenantId}/rules/${ruleId}`, rule)
+    return res.data
+  },
+  async deleteTenantRule(tenantId: string, ruleId: string) {
+    const res = await client.delete(`/v1/tenants/${tenantId}/rules/${ruleId}`)
+    return res.data
+  },
+  async listRuleTemplates(type?: string) {
+    const q = type ? `?type=${type}` : ''
+    const res = await client.get(`/v1/rules/templates${q}`)
+    return res.data
   }
 }
 

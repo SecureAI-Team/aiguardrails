@@ -15,8 +15,12 @@ type User struct {
 	Username     string
 	PasswordHash string
 	Role         string
+	Email        string
+	DisplayName  string
+	Status       string // active, inactive, suspended
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	LastLoginAt  *time.Time
 }
 
 // UserStore provides CRUD for users.
@@ -81,3 +85,99 @@ func (s *UserStore) Verify(username, password string) (*User, error) {
 	return u, nil
 }
 
+// List returns all users with optional filters.
+func (s *UserStore) List(role, status string, limit, offset int) ([]User, error) {
+	query := `SELECT id, username, password_hash, role, COALESCE(email,''), COALESCE(display_name,''), COALESCE(status,'active'), created_at, updated_at, last_login_at FROM users WHERE 1=1`
+	args := []interface{}{}
+	argIdx := 1
+
+	if role != "" {
+		query += ` AND role=$` + string(rune('0'+argIdx))
+		args = append(args, role)
+		argIdx++
+	}
+	if status != "" {
+		query += ` AND status=$` + string(rune('0'+argIdx))
+		args = append(args, status)
+		argIdx++
+	}
+	query += ` ORDER BY created_at DESC`
+	if limit > 0 {
+		query += ` LIMIT $` + string(rune('0'+argIdx))
+		args = append(args, limit)
+		argIdx++
+	}
+	if offset > 0 {
+		query += ` OFFSET $` + string(rune('0'+argIdx))
+		args = append(args, offset)
+	}
+
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var u User
+		var lastLogin sql.NullTime
+		if err := rows.Scan(&u.ID, &u.Username, &u.PasswordHash, &u.Role, &u.Email, &u.DisplayName, &u.Status, &u.CreatedAt, &u.UpdatedAt, &lastLogin); err != nil {
+			return nil, err
+		}
+		if lastLogin.Valid {
+			u.LastLoginAt = &lastLogin.Time
+		}
+		u.PasswordHash = "" // Don't expose
+		users = append(users, u)
+	}
+	return users, nil
+}
+
+// GetByID returns user by ID.
+func (s *UserStore) GetByID(id string) (*User, error) {
+	var u User
+	var lastLogin sql.NullTime
+	err := s.db.QueryRow(`SELECT id, username, password_hash, role, COALESCE(email,''), COALESCE(display_name,''), COALESCE(status,'active'), created_at, updated_at, last_login_at FROM users WHERE id=$1`, id).
+		Scan(&u.ID, &u.Username, &u.PasswordHash, &u.Role, &u.Email, &u.DisplayName, &u.Status, &u.CreatedAt, &u.UpdatedAt, &lastLogin)
+	if err != nil {
+		return nil, err
+	}
+	if lastLogin.Valid {
+		u.LastLoginAt = &lastLogin.Time
+	}
+	u.PasswordHash = ""
+	return &u, nil
+}
+
+// Update updates user info (not password).
+func (s *UserStore) Update(id string, role, email, displayName, status string) error {
+	now := time.Now().UTC()
+	_, err := s.db.Exec(`UPDATE users SET role=$1, email=$2, display_name=$3, status=$4, updated_at=$5 WHERE id=$6`,
+		role, email, displayName, status, now, id)
+	return err
+}
+
+// Delete removes a user.
+func (s *UserStore) Delete(id string) error {
+	_, err := s.db.Exec(`DELETE FROM users WHERE id=$1`, id)
+	return err
+}
+
+// UpdatePassword changes user password.
+func (s *UserStore) UpdatePassword(id, newPassword string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	now := time.Now().UTC()
+	_, err = s.db.Exec(`UPDATE users SET password_hash=$1, updated_at=$2 WHERE id=$3`, string(hash), now, id)
+	return err
+}
+
+// UpdateLastLogin records login timestamp.
+func (s *UserStore) UpdateLastLogin(id string) error {
+	now := time.Now().UTC()
+	_, err := s.db.Exec(`UPDATE users SET last_login_at=$1 WHERE id=$2`, now, id)
+	return err
+}

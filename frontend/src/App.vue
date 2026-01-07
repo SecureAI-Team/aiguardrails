@@ -9,6 +9,7 @@
         <RouterLink to="/policy-history">Policy History</RouterLink>
         <RouterLink to="/capabilities">Capabilities</RouterLink>
         <RouterLink to="/rules">Rules</RouterLink>
+        <RouterLink to="/users">Users</RouterLink>
         <RouterLink to="/logs">Logs</RouterLink>
         <RouterLink to="/login">Login</RouterLink>
       </nav>

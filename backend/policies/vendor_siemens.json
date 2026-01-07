@@ -1,0 +1,178 @@
+[
+    {
+        "id": "vendor-siemens-exclusive",
+        "name": "西门子产品专属助手",
+        "jurisdiction": "Global",
+        "regulation": "Business Rule",
+        "vendor": "Siemens",
+        "product": "",
+        "version": "1.0.0",
+        "severity": "medium",
+        "decision": "block",
+        "category": "vendor-restriction",
+        "tags": [
+            "siemens",
+            "exclusive",
+            "vendor-lock"
+        ],
+        "references": [],
+        "description": "AI助手仅回答西门子产品相关问题，拒绝竞品咨询。",
+        "remediation": "配置allowed_vendors和blocked_vendors列表。"
+    },
+    {
+        "id": "siemens-product-s7-1500",
+        "name": "S7-1500技术支持",
+        "jurisdiction": "Global",
+        "regulation": "Business Rule",
+        "vendor": "Siemens",
+        "product": "S7-1500",
+        "version": "1.0.0",
+        "severity": "low",
+        "decision": "allow",
+        "category": "product-support",
+        "tags": [
+            "siemens",
+            "s7-1500",
+            "plc",
+            "support"
+        ],
+        "references": [
+            "https://support.industry.siemens.com/cs/products/6es7511-1ak02-0ab0"
+        ],
+        "description": "允许S7-1500系列PLC的技术咨询和故障排查。",
+        "remediation": ""
+    },
+    {
+        "id": "siemens-product-s7-1200",
+        "name": "S7-1200技术支持",
+        "jurisdiction": "Global",
+        "regulation": "Business Rule",
+        "vendor": "Siemens",
+        "product": "S7-1200",
+        "version": "1.0.0",
+        "severity": "low",
+        "decision": "allow",
+        "category": "product-support",
+        "tags": [
+            "siemens",
+            "s7-1200",
+            "plc",
+            "support"
+        ],
+        "references": [
+            "https://support.industry.siemens.com/cs/products/6es7214-1ag40-0xb0"
+        ],
+        "description": "允许S7-1200系列PLC的技术咨询和故障排查。",
+        "remediation": ""
+    },
+    {
+        "id": "siemens-product-tia-portal",
+        "name": "TIA Portal技术支持",
+        "jurisdiction": "Global",
+        "regulation": "Business Rule",
+        "vendor": "Siemens",
+        "product": "TIA Portal",
+        "version": "1.0.0",
+        "severity": "low",
+        "decision": "allow",
+        "category": "product-support",
+        "tags": [
+            "siemens",
+            "tia-portal",
+            "engineering",
+            "support"
+        ],
+        "references": [
+            "https://support.industry.siemens.com/cs/products/tia-portal"
+        ],
+        "description": "允许TIA Portal工程软件的使用帮助和问题解答。",
+        "remediation": ""
+    },
+    {
+        "id": "siemens-product-wincc",
+        "name": "WinCC技术支持",
+        "jurisdiction": "Global",
+        "regulation": "Business Rule",
+        "vendor": "Siemens",
+        "product": "WinCC",
+        "version": "1.0.0",
+        "severity": "low",
+        "decision": "allow",
+        "category": "product-support",
+        "tags": [
+            "siemens",
+            "wincc",
+            "scada",
+            "hmi",
+            "support"
+        ],
+        "references": [
+            "https://support.industry.siemens.com/cs/products/wincc"
+        ],
+        "description": "允许WinCC SCADA/HMI系统的技术咨询。",
+        "remediation": ""
+    },
+    {
+        "id": "competitor-rockwell-block",
+        "name": "Rockwell产品屏蔽",
+        "jurisdiction": "Global",
+        "regulation": "Business Rule",
+        "vendor": "Rockwell",
+        "product": "",
+        "version": "1.0.0",
+        "severity": "medium",
+        "decision": "block",
+        "category": "competitor-block",
+        "tags": [
+            "rockwell",
+            "allen-bradley",
+            "competitor",
+            "blocked"
+        ],
+        "references": [],
+        "description": "拒绝回答Rockwell/Allen-Bradley产品相关问题。",
+        "remediation": "引导用户咨询西门子同类产品。"
+    },
+    {
+        "id": "competitor-schneider-block",
+        "name": "Schneider产品屏蔽",
+        "jurisdiction": "Global",
+        "regulation": "Business Rule",
+        "vendor": "Schneider",
+        "product": "",
+        "version": "1.0.0",
+        "severity": "medium",
+        "decision": "block",
+        "category": "competitor-block",
+        "tags": [
+            "schneider",
+            "modicon",
+            "competitor",
+            "blocked"
+        ],
+        "references": [],
+        "description": "拒绝回答Schneider/Modicon产品相关问题。",
+        "remediation": "引导用户咨询西门子同类产品。"
+    },
+    {
+        "id": "competitor-mitsubishi-block",
+        "name": "Mitsubishi产品屏蔽",
+        "jurisdiction": "Global",
+        "regulation": "Business Rule",
+        "vendor": "Mitsubishi",
+        "product": "",
+        "version": "1.0.0",
+        "severity": "medium",
+        "decision": "block",
+        "category": "competitor-block",
+        "tags": [
+            "mitsubishi",
+            "melsec",
+            "competitor",
+            "blocked"
+        ],
+        "references": [],
+        "description": "拒绝回答Mitsubishi/MELSEC产品相关问题。",
+        "remediation": "引导用户咨询西门子同类产品。"
+    }
+]

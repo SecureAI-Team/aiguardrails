@@ -7,6 +7,9 @@ import PolicyHistory from './pages/PolicyHistory.vue'
 import Capabilities from './pages/Capabilities.vue'
 import Rules from './pages/Rules.vue'
 import Login from './pages/Login.vue'
+import Users from './pages/Users.vue'
+import TenantUsers from './pages/TenantUsers.vue'
+import Profile from './pages/Profile.vue'
 
 const routes = [
   { path: '/login', component: Login },
@@ -16,7 +19,10 @@ const routes = [
   { path: '/policy-history', component: PolicyHistory },
   { path: '/rules', component: Rules },
   { path: '/capabilities', component: Capabilities },
-  { path: '/logs', component: Logs }
+  { path: '/logs', component: Logs },
+  { path: '/users', component: Users },
+  { path: '/tenants/:tenantId/users', component: TenantUsers },
+  { path: '/profile', component: Profile }
 ]
 
 const router = createRouter({
@@ -25,4 +31,3 @@ const router = createRouter({
 })
 
 export default router
-

@@ -1,0 +1,162 @@
+[
+    {
+        "id": "cn-cybersec-001",
+        "name": "网络安全法-数据出境管理",
+        "jurisdiction": "CN",
+        "regulation": "Cybersecurity Law",
+        "vendor": "",
+        "product": "",
+        "version": "1.0.0",
+        "severity": "high",
+        "decision": "block",
+        "category": "data-sovereignty",
+        "tags": [
+            "china",
+            "cybersecurity",
+            "cross-border",
+            "critical-infrastructure"
+        ],
+        "references": [
+            "http://www.cac.gov.cn/2016-11/07/c_1119867116.htm"
+        ],
+        "description": "关键信息基础设施运营者在中国境内运营中收集和产生的个人信息和重要数据应当在境内存储。",
+        "remediation": "确保数据在中国境内处理和存储，如需出境需进行安全评估。"
+    },
+    {
+        "id": "cn-pipl-001",
+        "name": "个人信息保护法-敏感信息",
+        "jurisdiction": "CN",
+        "regulation": "PIPL",
+        "vendor": "",
+        "product": "",
+        "version": "1.0.0",
+        "severity": "high",
+        "decision": "block",
+        "category": "privacy",
+        "tags": [
+            "china",
+            "pipl",
+            "privacy",
+            "sensitive-data"
+        ],
+        "references": [
+            "http://www.npc.gov.cn/npc/c30834/202108/a8c4e3672c74491a80b53a172bb753fe.shtml"
+        ],
+        "description": "处理敏感个人信息（如生物识别、医疗健康、金融账户、行踪轨迹等）需取得个人单独同意。",
+        "remediation": "启用敏感信息脱敏，记录处理目的和依据，确保已获得充分授权。"
+    },
+    {
+        "id": "cn-data-security-001",
+        "name": "数据安全法-重要数据分类",
+        "jurisdiction": "CN",
+        "regulation": "Data Security Law",
+        "vendor": "",
+        "product": "",
+        "version": "1.0.0",
+        "severity": "high",
+        "decision": "mark",
+        "category": "data-classification",
+        "tags": [
+            "china",
+            "data-security",
+            "classification"
+        ],
+        "references": [
+            "http://www.npc.gov.cn/npc/c30834/202106/7c9af12f51334a73b56d7938f99a788a.shtml"
+        ],
+        "description": "国家建立数据分类分级保护制度，对重要数据实施更严格保护。",
+        "remediation": "对数据进行分类分级，针对重要数据实施加密、访问控制和审计。"
+    },
+    {
+        "id": "cn-algorithm-001",
+        "name": "算法推荐管理规定",
+        "jurisdiction": "CN",
+        "regulation": "Algorithm Recommendation",
+        "vendor": "",
+        "product": "",
+        "version": "1.0.0",
+        "severity": "medium",
+        "decision": "mark",
+        "category": "algorithm",
+        "tags": [
+            "china",
+            "algorithm",
+            "recommendation",
+            "transparency"
+        ],
+        "references": [
+            "http://www.cac.gov.cn/2022-01/04/c_1642894606364259.htm"
+        ],
+        "description": "算法推荐服务提供者应当向用户提供关闭算法推荐服务的选项，不得利用算法进行差别定价。",
+        "remediation": "确保算法透明度，提供用户控制选项，避免价格歧视。"
+    },
+    {
+        "id": "cn-genai-001",
+        "name": "生成式人工智能管理暂行办法",
+        "jurisdiction": "CN",
+        "regulation": "Generative AI Regulation",
+        "vendor": "",
+        "product": "",
+        "version": "1.0.0",
+        "severity": "critical",
+        "decision": "block",
+        "category": "content-safety",
+        "tags": [
+            "china",
+            "genai",
+            "content-moderation"
+        ],
+        "references": [
+            "http://www.cac.gov.cn/2023-07/13/c_1690898327029107.htm"
+        ],
+        "description": "生成式AI服务不得生成违法内容，需进行内容审核和标识。",
+        "remediation": "实施内容过滤，添加AI生成内容标识，建立投诉举报机制。"
+    },
+    {
+        "id": "siemens-safety-001",
+        "name": "西门子PLC安全操作",
+        "jurisdiction": "Global",
+        "regulation": "Industrial Safety",
+        "vendor": "Siemens",
+        "product": "S7-1500",
+        "version": "1.0.0",
+        "severity": "critical",
+        "decision": "block",
+        "category": "safety",
+        "tags": [
+            "siemens",
+            "plc",
+            "s7-1500",
+            "safety",
+            "industrial"
+        ],
+        "references": [
+            "https://support.industry.siemens.com"
+        ],
+        "description": "禁止通过AI直接执行PLC停机、安全覆盖等危险操作，需人工确认。",
+        "remediation": "所有PLC控制命令需经过权限验证和二次确认。"
+    },
+    {
+        "id": "siemens-safety-002",
+        "name": "西门子TIA Portal项目保护",
+        "jurisdiction": "Global",
+        "regulation": "Industrial Safety",
+        "vendor": "Siemens",
+        "product": "TIA Portal",
+        "version": "1.0.0",
+        "severity": "high",
+        "decision": "block",
+        "category": "data-protection",
+        "tags": [
+            "siemens",
+            "tia-portal",
+            "project",
+            "protection"
+        ],
+        "references": [
+            "https://support.industry.siemens.com"
+        ],
+        "description": "TIA Portal项目文件包含敏感工艺信息，不得未授权泄露。",
+        "remediation": "实施项目文件加密，控制下载权限，记录访问日志。"
+    }
+]

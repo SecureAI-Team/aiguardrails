@@ -28,24 +28,26 @@ import (
 
 // Server wires HTTP routes to services.
 type Server struct {
-	cfg        config.Config
-	router     *chi.Mux
-	tenant     tenant.Service
-	policy     policy.Engine
-	firewall   *promptfw.Firewall
-	agent      *agent.Gateway
-	rag        *rag.Security
-	usage      *usage.Meter
-	rate       *usage.RateLimiter
-	audit      *audit.Logger
-	auditStore *audit.Store
-	mcp        *mcp.Broker
-	capStore   *mcp.Store
-	rulesRepo  *policy.RulesRepository
-	ruleStore  *policy.RuleStore
-	userStore  *auth.UserStore
-	jwtSigner  *auth.JWTSigner
-	opaEval    *opa.Evaluator
+	cfg             config.Config
+	router          *chi.Mux
+	tenant          tenant.Service
+	policy          policy.Engine
+	firewall        *promptfw.Firewall
+	agent           *agent.Gateway
+	rag             *rag.Security
+	usage           *usage.Meter
+	rate            *usage.RateLimiter
+	audit           *audit.Logger
+	auditStore      *audit.Store
+	mcp             *mcp.Broker
+	capStore        *mcp.Store
+	rulesRepo       *policy.RulesRepository
+	ruleStore       *policy.RuleStore
+	tenantRuleStore *policy.TenantRuleStore
+	userStore       *auth.UserStore
+	tenantUserStore *auth.TenantUserStore
+	jwtSigner       *auth.JWTSigner
+	opaEval         *opa.Evaluator
 }
 
 type ctxKey string
@@ -53,26 +55,28 @@ type ctxKey string
 const authRoleCtxKey ctxKey = "role"
 
 // New builds a Server with dependencies.
-func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, firewall *promptfw.Firewall, agentGw *agent.Gateway, ragSec *rag.Security, usageMeter *usage.Meter, rateLimiter *usage.RateLimiter, auditLog *audit.Logger, auditStore *audit.Store, mcpBroker *mcp.Broker, capStore *mcp.Store, rulesRepo *policy.RulesRepository, ruleStore *policy.RuleStore, userStore *auth.UserStore, jwtSigner *auth.JWTSigner, opaEval *opa.Evaluator) *Server {
+func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, firewall *promptfw.Firewall, agentGw *agent.Gateway, ragSec *rag.Security, usageMeter *usage.Meter, rateLimiter *usage.RateLimiter, auditLog *audit.Logger, auditStore *audit.Store, mcpBroker *mcp.Broker, capStore *mcp.Store, rulesRepo *policy.RulesRepository, ruleStore *policy.RuleStore, tenantRuleStore *policy.TenantRuleStore, userStore *auth.UserStore, tenantUserStore *auth.TenantUserStore, jwtSigner *auth.JWTSigner, opaEval *opa.Evaluator) *Server {
 	s := &Server{
-		cfg:        cfg,
-		router:     chi.NewRouter(),
-		tenant:     tenantSvc,
-		policy:     policyEng,
-		firewall:   firewall,
-		agent:      agentGw,
-		rag:        ragSec,
-		usage:      usageMeter,
-		rate:       rateLimiter,
-		audit:      auditLog,
-		auditStore: auditStore,
-		mcp:        mcpBroker,
-		capStore:   capStore,
-		rulesRepo:  rulesRepo,
-		ruleStore:  ruleStore,
-		userStore:  userStore,
-		jwtSigner:  jwtSigner,
-		opaEval:    opaEval,
+		cfg:             cfg,
+		router:          chi.NewRouter(),
+		tenant:          tenantSvc,
+		policy:          policyEng,
+		firewall:        firewall,
+		agent:           agentGw,
+		rag:             ragSec,
+		usage:           usageMeter,
+		rate:            rateLimiter,
+		audit:           auditLog,
+		auditStore:      auditStore,
+		mcp:             mcpBroker,
+		capStore:        capStore,
+		rulesRepo:       rulesRepo,
+		ruleStore:       ruleStore,
+		tenantRuleStore: tenantRuleStore,
+		userStore:       userStore,
+		tenantUserStore: tenantUserStore,
+		jwtSigner:       jwtSigner,
+		opaEval:         opaEval,
 	}
 	s.routes()
 	return s
@@ -163,6 +167,13 @@ func (s *Server) routes() {
 			r.With(rbac.RequirePerm(rbac.PermViewLogs)).Get("/audit", s.listAudit)
 			if s.rulesRepo != nil && s.ruleStore != nil {
 				r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Route("/", s.registerRulesRoutes)
+			}
+			if s.tenantRuleStore != nil {
+				r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Route("/", s.registerTenantRulesRoutes)
+			}
+			// User management routes
+			if s.userStore != nil {
+				r.Route("/", s.registerUserRoutes)
 			}
 		})
 

@@ -80,6 +80,8 @@ func main() {
 		log.Printf("warning: failed to load rules: %v", err)
 	}
 	ruleStore := policy.NewRuleStore(db)
+	tenantRuleStore := policy.NewTenantRuleStore(db)
+	tenantUserStore := auth.NewTenantUserStore(db)
 	var opaEval *opa.Evaluator
 	if cfg.OPAEnabled {
 		opaEval, err = opa.NewFromDir(filepath.Join("backend", cfg.OPARegoPath), cfg.OPADecision, time.Duration(cfg.OPATimeoutSec)*time.Second)
@@ -88,7 +90,7 @@ func main() {
 		}
 	}
 
-	srv := server.New(cfg, tenantSvc, policyEng, firewall, agentGw, ragSec, usageMeter, rateLimiter, auditLog, auditStore, mcpBroker, capStore, rulesRepo, ruleStore, userStore, jwtSigner, opaEval)
+	srv := server.New(cfg, tenantSvc, policyEng, firewall, agentGw, ragSec, usageMeter, rateLimiter, auditLog, auditStore, mcpBroker, capStore, rulesRepo, ruleStore, tenantRuleStore, userStore, tenantUserStore, jwtSigner, opaEval)
 	log.Printf("starting API on %s", srv.Addr())
 	if err := http.ListenAndServe(srv.Addr(), srv.Handler()); err != nil {
 		log.Fatal(err)
