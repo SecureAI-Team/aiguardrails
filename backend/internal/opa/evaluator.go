@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/open-policy-agent/opa/rego"
@@ -23,15 +24,35 @@ type Input struct {
 	Signals    interface{} `json:"signals,omitempty"`
 }
 
-// Evaluator wraps OPA rego evaluation.
+// Evaluator wraps OPA rego evaluation with hot-reload support.
 type Evaluator struct {
-	query   string
-	modules map[string]string
-	timeout time.Duration
+	mu       sync.RWMutex
+	query    string
+	modules  map[string]string
+	timeout  time.Duration
+	version  int64
+	onChange func(version int64)
 }
 
 // NewFromDir loads all .rego files under dir and builds evaluator.
 func NewFromDir(dir, decision string, timeout time.Duration) (*Evaluator, error) {
+	modules, err := loadModules(dir)
+	if err != nil {
+		return nil, err
+	}
+	if len(modules) == 0 {
+		return nil, fmt.Errorf("no rego modules found in %s", dir)
+	}
+	return &Evaluator{
+		query:   decision,
+		modules: modules,
+		timeout: timeout,
+		version: 1,
+	}, nil
+}
+
+// loadModules reads all .rego files from directory.
+func loadModules(dir string) (map[string]string, error) {
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -47,22 +68,92 @@ func NewFromDir(dir, decision string, timeout time.Duration) (*Evaluator, error)
 		}
 		modules[f.Name()] = string(b)
 	}
-	if len(modules) == 0 {
-		return nil, fmt.Errorf("no rego modules found in %s", dir)
-	}
-	return &Evaluator{query: decision, modules: modules, timeout: timeout}, nil
+	return modules, nil
 }
 
-// Decide returns (allow, reason, signals, error).
+// Reload reloads modules from directory or raw content.
+func (e *Evaluator) Reload(dir string) error {
+	modules, err := loadModules(dir)
+	if err != nil {
+		return err
+	}
+	if len(modules) == 0 {
+		return fmt.Errorf("no rego modules found in %s", dir)
+	}
+
+	e.mu.Lock()
+	e.modules = modules
+	e.version++
+	version := e.version
+	onChange := e.onChange
+	e.mu.Unlock()
+
+	if onChange != nil {
+		onChange(version)
+	}
+	return nil
+}
+
+// ReloadFromContent reloads modules from provided content map.
+func (e *Evaluator) ReloadFromContent(modules map[string]string) error {
+	if len(modules) == 0 {
+		return fmt.Errorf("empty modules")
+	}
+
+	e.mu.Lock()
+	e.modules = modules
+	e.version++
+	version := e.version
+	onChange := e.onChange
+	e.mu.Unlock()
+
+	if onChange != nil {
+		onChange(version)
+	}
+	return nil
+}
+
+// Version returns current policy version.
+func (e *Evaluator) Version() int64 {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.version
+}
+
+// SetOnChange sets callback for version changes.
+func (e *Evaluator) SetOnChange(fn func(version int64)) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.onChange = fn
+}
+
+// Modules returns current module names.
+func (e *Evaluator) Modules() []string {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	names := make([]string, 0, len(e.modules))
+	for name := range e.modules {
+		names = append(names, name)
+	}
+	return names
+}
+
+// Decide returns (allow, data, error).
 func (e *Evaluator) Decide(ctx context.Context, in Input) (bool, interface{}, error) {
-	ctx, cancel := context.WithTimeout(ctx, e.timeout)
+	e.mu.RLock()
+	modules := e.modules
+	query := e.query
+	timeout := e.timeout
+	e.mu.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	opts := []func(*rego.Rego){
-		rego.Query(e.query),
+		rego.Query(query),
 		rego.Input(in),
 	}
-	for name, mod := range e.modules {
+	for name, mod := range modules {
 		opts = append(opts, rego.Module(name, mod))
 	}
 	r := rego.New(opts...)

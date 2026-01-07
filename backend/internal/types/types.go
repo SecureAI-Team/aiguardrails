@@ -32,6 +32,33 @@ type Policy struct {
 	OutputFilters  []string // PII, secrets, toxicity tags
 	SensitiveTerms []string // custom sensitive words
 	LastModifiedAt time.Time
+	Version        int    // version number
+	ChangeSummary  string // description of changes
+	ChangedBy      string // user who made the change
+}
+
+// PolicyVersion represents a version entry in history.
+type PolicyVersion struct {
+	PolicyID      string
+	Version       int
+	UpdatedAt     time.Time
+	ChangeSummary string
+	ChangedBy     string
+}
+
+// PolicyDiff represents differences between two policy versions.
+type PolicyDiff struct {
+	PolicyID string
+	FromVer  int
+	ToVer    int
+	Changes  map[string]FieldChange
+}
+
+// FieldChange represents a change to a single field.
+type FieldChange struct {
+	Field    string
+	OldValue interface{}
+	NewValue interface{}
 }
 
 // UsageRecord tracks app usage for metering.
@@ -47,4 +74,3 @@ type GuardrailResult struct {
 	Reason  string
 	Signals []string
 }
-

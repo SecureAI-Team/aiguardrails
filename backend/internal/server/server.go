@@ -19,8 +19,8 @@ import (
 	"aiguardrails/internal/opa"
 	"aiguardrails/internal/policy"
 	"aiguardrails/internal/promptfw"
-	"aiguardrails/internal/rbac"
 	"aiguardrails/internal/rag"
+	"aiguardrails/internal/rbac"
 	"aiguardrails/internal/tenant"
 	"aiguardrails/internal/types"
 	"aiguardrails/internal/usage"
@@ -28,16 +28,16 @@ import (
 
 // Server wires HTTP routes to services.
 type Server struct {
-	cfg      config.Config
-	router   *chi.Mux
-	tenant   tenant.Service
-	policy   policy.Engine
-	firewall *promptfw.Firewall
-	agent    *agent.Gateway
-	rag      *rag.Security
-	usage    *usage.Meter
-	rate     *usage.RateLimiter
-	audit    *audit.Logger
+	cfg        config.Config
+	router     *chi.Mux
+	tenant     tenant.Service
+	policy     policy.Engine
+	firewall   *promptfw.Firewall
+	agent      *agent.Gateway
+	rag        *rag.Security
+	usage      *usage.Meter
+	rate       *usage.RateLimiter
+	audit      *audit.Logger
 	auditStore *audit.Store
 	mcp        *mcp.Broker
 	capStore   *mcp.Store
@@ -266,11 +266,11 @@ func (s *Server) revokeApp(w http.ResponseWriter, r *http.Request) {
 }
 
 type policyRequest struct {
-	Name          string   `json:"name"`
-	PromptRules   []string `json:"prompt_rules"`
-	ToolAllowList []string `json:"tool_allowlist"`
-	RAGNamespaces []string `json:"rag_namespaces"`
-	OutputFilters []string `json:"output_filters"`
+	Name           string   `json:"name"`
+	PromptRules    []string `json:"prompt_rules"`
+	ToolAllowList  []string `json:"tool_allowlist"`
+	RAGNamespaces  []string `json:"rag_namespaces"`
+	OutputFilters  []string `json:"output_filters"`
 	SensitiveTerms []string `json:"sensitive_terms"`
 }
 
@@ -286,12 +286,12 @@ func (s *Server) createPolicy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, err := s.policy.CreatePolicy(types.Policy{
-		TenantID:      tenantID,
-		Name:          req.Name,
-		PromptRules:   req.PromptRules,
-		ToolAllowList: req.ToolAllowList,
-		RAGNamespaces: req.RAGNamespaces,
-		OutputFilters: req.OutputFilters,
+		TenantID:       tenantID,
+		Name:           req.Name,
+		PromptRules:    req.PromptRules,
+		ToolAllowList:  req.ToolAllowList,
+		RAGNamespaces:  req.RAGNamespaces,
+		OutputFilters:  req.OutputFilters,
 		SensitiveTerms: req.SensitiveTerms,
 	})
 	if err != nil {
@@ -316,13 +316,13 @@ func (s *Server) updatePolicy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, err := s.policy.UpdatePolicy(types.Policy{
-		ID:            policyID,
-		TenantID:      tenantID,
-		Name:          req.Name,
-		PromptRules:   req.PromptRules,
-		ToolAllowList: req.ToolAllowList,
-		RAGNamespaces: req.RAGNamespaces,
-		OutputFilters: req.OutputFilters,
+		ID:             policyID,
+		TenantID:       tenantID,
+		Name:           req.Name,
+		PromptRules:    req.PromptRules,
+		ToolAllowList:  req.ToolAllowList,
+		RAGNamespaces:  req.RAGNamespaces,
+		OutputFilters:  req.OutputFilters,
 		SensitiveTerms: req.SensitiveTerms,
 	})
 	if err != nil {
@@ -478,7 +478,7 @@ func (s *Server) planAndAct(w http.ResponseWriter, r *http.Request) {
 			s.audit.RecordStore(s.auditStore, "usage_record", map[string]string{"app_id": appID, "count": fmt.Sprintf("%d", count)})
 		}
 	}
-	result, err := s.agent.PlanAndAct(tenantID, req.Prompt, req.Tools)
+	result, err := s.agent.LegacyPlanAndAct(tenantID, req.Prompt, req.Tools)
 	if err != nil {
 		http.Error(w, result.Reason, http.StatusForbidden)
 		return
@@ -600,6 +600,7 @@ func summarizePolicyDiff(oldP, newP *types.Policy) string {
 	}
 	return strings.Join(changes, "|")
 }
+
 type capabilityRequest struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
@@ -639,4 +640,3 @@ func (s *Server) writeJSON(w http.ResponseWriter, status int, payload interface{
 func (s *Server) Addr() string {
 	return ":" + s.cfg.HTTPPort
 }
-
