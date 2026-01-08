@@ -179,14 +179,14 @@ func (s *Server) routes() {
 			r.With(rbac.RequirePerm(rbac.PermManageApps)).Post("/capabilities", s.createCapability)
 			r.With(rbac.RequirePerm(rbac.PermViewLogs)).Get("/audit", s.listAudit)
 			if s.rulesRepo != nil && s.ruleStore != nil {
-				r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Route("/", s.registerRulesRoutes)
+				s.registerRulesRoutes(r)
 			}
 			if s.tenantRuleStore != nil {
-				r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Route("/", s.registerTenantRulesRoutes)
+				s.registerTenantRulesRoutes(r)
 			}
 			// User management routes
 			if s.userStore != nil {
-				r.Route("/", s.registerUserRoutes)
+				s.registerUserRoutes(r)
 			}
 		})
 
