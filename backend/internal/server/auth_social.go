@@ -132,8 +132,65 @@ func (s *Server) loginWeChat(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) loginAlipay(w http.ResponseWriter, r *http.Request) {
-	// TODO: 实现支付宝登录逻辑 (类似微信)
-	http.Error(w, "alipay login not implemented yet", http.StatusNotImplemented)
+	var req oauthLoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// 验证state
+	_, _, err := s.socialAuth.ValidateState(req.State)
+	if err != nil {
+		http.Error(w, "invalid state", http.StatusBadRequest)
+		return
+	}
+
+	// 换取用户信息
+	alipayUser, err := s.socialAuth.ExchangeAlipayCode(req.Code)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// 查找或创建用户
+	providerID := alipayUser.UserID
+
+	socialAccount, err := s.socialAuth.FindByProviderID(auth.ProviderAlipay, providerID)
+	var user *auth.User
+
+	if err != nil {
+		// 新用户，自动注册
+		username := "alipay_" + providerID
+		if len(providerID) > 8 {
+			username = "alipay_" + providerID[:8]
+		}
+		user, err = s.userStore.Create(username, providerID, "tenant_user")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// 绑定社交账号
+		_, _ = s.socialAuth.BindSocialAccount(user.ID, auth.ProviderAlipay, providerID, alipayUser)
+	} else {
+		user, _ = s.userStore.GetByID(socialAccount.UserID)
+	}
+
+	// 生成token
+	token, err := s.jwtSigner.Sign(user.Username, user.Role, 24*time.Hour)
+	if err != nil {
+		http.Error(w, "token generation failed", http.StatusInternalServerError)
+		return
+	}
+
+	s.audit.RecordStore(s.auditStore, "alipay_login", map[string]string{
+		"user_id":   user.ID,
+		"alipay_id": alipayUser.UserID,
+	})
+
+	s.writeJSON(w, http.StatusOK, map[string]interface{}{
+		"token": token,
+		"user":  map[string]string{"id": user.ID, "username": user.Username, "role": user.Role},
+	})
 }
 
 func (s *Server) sendSMSCode(w http.ResponseWriter, r *http.Request) {

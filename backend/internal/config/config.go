@@ -43,6 +43,16 @@ type Config struct {
 	OPATimeoutSec  int
 	// Social auth
 	SocialAuthCallbackURL string
+	WeChatAppID           string
+	WeChatAppSecret       string
+	AlipayAppID           string
+	AlipayPrivateKey      string
+	AlipayPublicKey       string
+	SMSProvider           string // aliyun, tencent
+	SMSAccessKey          string
+	SMSSecretKey          string
+	SMSSignName           string
+	SMSTemplateCode       string
 }
 
 // Default returns a minimal runnable configuration for local development.

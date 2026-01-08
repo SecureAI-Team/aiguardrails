@@ -12,6 +12,7 @@ import TenantUsers from './pages/TenantUsers.vue'
 import Profile from './pages/Profile.vue'
 import Landing from './pages/Landing.vue'
 import Dashboard from './pages/Dashboard.vue'
+import Settings from './pages/Settings.vue'
 
 const routes = [
   { path: '/', component: Landing },
@@ -27,7 +28,8 @@ const routes = [
   { path: '/logs', component: Logs },
   { path: '/users', component: Users },
   { path: '/tenants/:tenantId/users', component: TenantUsers },
-  { path: '/profile', component: Profile }
+  { path: '/profile', component: Profile },
+  { path: '/settings', component: Settings }
 ]
 
 const router = createRouter({

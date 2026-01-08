@@ -167,6 +167,118 @@ type WeChatUser struct {
 	Country    string `json:"country"`
 }
 
+// AlipayUser 支付宝用户信息
+type AlipayUser struct {
+	UserID   string `json:"user_id"`
+	Avatar   string `json:"avatar"`
+	NickName string `json:"nick_name"`
+	Province string `json:"province"`
+	City     string `json:"city"`
+	Gender   string `json:"gender"`
+}
+
+// ExchangeAlipayCode 支付宝code换取用户信息
+func (s *SocialAuthStore) ExchangeAlipayCode(authCode string) (*AlipayUser, error) {
+	// Step 1: 换取access_token
+	// 支付宝需要签名，这里使用简化实现
+	// 实际生产环境需要使用支付宝SDK进行签名
+	tokenURL := "https://openapi.alipay.com/gateway.do"
+
+	params := url.Values{}
+	params.Set("app_id", s.config.AlipayAppID)
+	params.Set("method", "alipay.system.oauth.token")
+	params.Set("charset", "utf-8")
+	params.Set("sign_type", "RSA2")
+	params.Set("timestamp", time.Now().Format("2006-01-02 15:04:05"))
+	params.Set("version", "1.0")
+	params.Set("grant_type", "authorization_code")
+	params.Set("code", authCode)
+	// TODO: 实际需要使用私钥签名
+	// params.Set("sign", signWithPrivateKey(params, s.config.AlipayPrivateKey))
+
+	resp, err := http.PostForm(tokenURL, params)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	var tokenResp struct {
+		AlipaySystemOauthTokenResponse struct {
+			UserID      string `json:"user_id"`
+			AccessToken string `json:"access_token"`
+		} `json:"alipay_system_oauth_token_response"`
+		ErrorResponse struct {
+			Code string `json:"code"`
+			Msg  string `json:"msg"`
+		} `json:"error_response"`
+	}
+	if err := json.Unmarshal(body, &tokenResp); err != nil {
+		return nil, err
+	}
+	if tokenResp.ErrorResponse.Code != "" {
+		return nil, fmt.Errorf("alipay error: %s", tokenResp.ErrorResponse.Msg)
+	}
+
+	// Step 2: 获取用户信息
+	userParams := url.Values{}
+	userParams.Set("app_id", s.config.AlipayAppID)
+	userParams.Set("method", "alipay.user.info.share")
+	userParams.Set("charset", "utf-8")
+	userParams.Set("sign_type", "RSA2")
+	userParams.Set("timestamp", time.Now().Format("2006-01-02 15:04:05"))
+	userParams.Set("version", "1.0")
+	userParams.Set("auth_token", tokenResp.AlipaySystemOauthTokenResponse.AccessToken)
+	// TODO: 实际需要使用私钥签名
+
+	resp2, err := http.PostForm(tokenURL, userParams)
+	if err != nil {
+		return nil, err
+	}
+	defer resp2.Body.Close()
+
+	body2, _ := io.ReadAll(resp2.Body)
+	var userResp struct {
+		AlipayUserInfoShareResponse struct {
+			UserID   string `json:"user_id"`
+			Avatar   string `json:"avatar"`
+			NickName string `json:"nick_name"`
+			Province string `json:"province"`
+			City     string `json:"city"`
+			Gender   string `json:"gender"`
+		} `json:"alipay_user_info_share_response"`
+	}
+	if err := json.Unmarshal(body2, &userResp); err != nil {
+		return nil, err
+	}
+
+	return &AlipayUser{
+		UserID:   tokenResp.AlipaySystemOauthTokenResponse.UserID,
+		Avatar:   userResp.AlipayUserInfoShareResponse.Avatar,
+		NickName: userResp.AlipayUserInfoShareResponse.NickName,
+		Province: userResp.AlipayUserInfoShareResponse.Province,
+		City:     userResp.AlipayUserInfoShareResponse.City,
+		Gender:   userResp.AlipayUserInfoShareResponse.Gender,
+	}, nil
+}
+
+// GetConfig 获取当前OAuth配置（用于前端显示）
+func (s *SocialAuthStore) GetConfig() map[string]interface{} {
+	return map[string]interface{}{
+		"wechat_enabled": s.config.WeChatAppID != "",
+		"alipay_enabled": s.config.AlipayAppID != "",
+		"wechat_app_id":  maskString(s.config.WeChatAppID),
+		"alipay_app_id":  maskString(s.config.AlipayAppID),
+	}
+}
+
+func maskString(s string) string {
+	if len(s) <= 4 {
+		return "****"
+	}
+	return s[:4] + "****"
+}
+
 // BindSocialAccount 绑定社交账号
 func (s *SocialAuthStore) BindSocialAccount(userID string, provider SocialProvider, providerID string, profile interface{}) (*SocialAccount, error) {
 	profileJSON, _ := json.Marshal(profile)
