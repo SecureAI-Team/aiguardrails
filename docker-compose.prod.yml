@@ -1,0 +1,131 @@
+version: "3.9"
+
+# Production docker-compose for Aliyun ECS deployment
+# Usage: docker compose -f docker-compose.prod.yml up -d
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aiguardrails}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme-db-password}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: [ "redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-changeme-redis}" ]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme-redis}", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  api:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgres://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-changeme-db-password}@db:5432/${POSTGRES_DB:-aiguardrails}?sslmode=disable
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme-redis}@redis:6379
+      REDIS_NAMESPACE: ${REDIS_NAMESPACE:-aiguardrails}
+      # Security
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+      ADMIN_BOOT_USER: ${ADMIN_BOOT_USER:-admin@example.com}
+      ADMIN_BOOT_PASSWORD: ${ADMIN_BOOT_PASSWORD:-ChangeMe123!}
+      # OIDC
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-aiguardrails}
+      OIDC_JWKS_URL: ${OIDC_JWKS_URL:-}
+      OIDC_ADMIN_ROLE: ${OIDC_ADMIN_ROLE:-tenant_admin}
+      OIDC_USER_ROLE: ${OIDC_USER_ROLE:-tenant_user}
+      # QWEN (AI Content Moderation)
+      QWEN_API_BASE: ${QWEN_API_BASE:-https://dashscope.aliyuncs.com/api/v1/services/aigc/text-moderation}
+      QWEN_API_TOKEN: ${QWEN_API_TOKEN:-}
+      QWEN_MODEL: ${QWEN_MODEL:-qwen-moderation}
+      QWEN_TIMEOUT_SEC: ${QWEN_TIMEOUT_SEC:-8}
+      OUTPUT_MODE: ${OUTPUT_MODE:-mark}
+      # OPA
+      OPA_ENABLED: ${OPA_ENABLED:-true}
+      OPA_REGO_PATH: ${OPA_REGO_PATH:-opa/policies}
+      # Social Auth
+      SOCIAL_AUTH_CALLBACK_URL: ${SOCIAL_AUTH_CALLBACK_URL:-}
+      WECHAT_APP_ID: ${WECHAT_APP_ID:-}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
+      ALIPAY_APP_ID: ${ALIPAY_APP_ID:-}
+      ALIPAY_PRIVATE_KEY: ${ALIPAY_PRIVATE_KEY:-}
+      ALIPAY_PUBLIC_KEY: ${ALIPAY_PUBLIC_KEY:-}
+      # SMS
+      SMS_PROVIDER: ${SMS_PROVIDER:-}
+      SMS_ACCESS_KEY: ${SMS_ACCESS_KEY:-}
+      SMS_SECRET_KEY: ${SMS_SECRET_KEY:-}
+      SMS_SIGN_NAME: ${SMS_SIGN_NAME:-}
+      SMS_TEMPLATE_CODE: ${SMS_TEMPLATE_CODE:-}
+      # Misc
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+    networks:
+      - internal
+      - external
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=PathPrefix(`/v1`)"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE: ${VITE_API_BASE:-/api}
+        VITE_ADMIN_TOKEN: ${ADMIN_TOKEN}
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - external
+
+  nginx:
+    image: nginx:1.25-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+      - frontend
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/ssl:/etc/nginx/ssl:ro
+      - ./deploy/nginx/logs:/var/log/nginx
+    networks:
+      - external
+
+networks:
+  internal:
+    driver: bridge
+  external:
+    driver: bridge
+
+volumes:
+  db_data:
+  redis_data:

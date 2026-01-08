@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"aiguardrails/internal/agent"
+	"aiguardrails/internal/alert"
 	"aiguardrails/internal/audit"
 	"aiguardrails/internal/auth"
 	"aiguardrails/internal/config"
@@ -50,6 +51,7 @@ type Server struct {
 	smsStore        *auth.SMSStore
 	jwtSigner       *auth.JWTSigner
 	opaEval         *opa.Evaluator
+	alertStore      *alert.RuleStore
 }
 
 type ctxKey string

@@ -13,6 +13,8 @@ import Profile from './pages/Profile.vue'
 import Landing from './pages/Landing.vue'
 import Dashboard from './pages/Dashboard.vue'
 import Settings from './pages/Settings.vue'
+import AlertRules from './pages/AlertRules.vue'
+import AlertCenter from './pages/AlertCenter.vue'
 
 const routes = [
   { path: '/', component: Landing },
@@ -29,7 +31,9 @@ const routes = [
   { path: '/users', component: Users },
   { path: '/tenants/:tenantId/users', component: TenantUsers },
   { path: '/profile', component: Profile },
-  { path: '/settings', component: Settings }
+  { path: '/settings', component: Settings },
+  { path: '/alerts', component: AlertCenter },
+  { path: '/alerts/rules', component: AlertRules }
 ]
 
 const router = createRouter({
