@@ -1,144 +1,67 @@
 -- AI GuardRails 默认数据初始化
--- 运行此脚本以填充初始演示数据
-
--- ============================================
--- 规则库 (Rules) - 合规规则和安全规则
--- ============================================
-INSERT INTO rules (id, name, description, type, severity, decision, jurisdiction, regulation, vendor, product, rego_module, created_at) VALUES
--- 法规合规规则
-('rule-gdpr-pii-01', 'GDPR 个人数据脱敏', '检测并脱敏欧盟公民的个人身份信息', 'output_filter', 'high', 'mask', 'EU', 'GDPR', NULL, NULL, 'package gdpr_pii
-
-default allow = true
-
-deny[msg] {
-    contains(input.output, "passport")
-    msg := "检测到护照信息，需要脱敏"
-}', NOW()),
-
-('rule-pipl-china-01', 'PIPL 个人信息保护', '检测中国公民敏感个人信息', 'output_filter', 'high', 'mask', 'CN', 'PIPL', NULL, NULL, 'package pipl
-
-default allow = true
-
-deny[msg] {
-    regex.match(`\d{18}|\d{17}X`, input.output)
-    msg := "检测到身份证号，需要脱敏"
-}', NOW()),
-
-('rule-csl-china-01', 'CSL 网络安全合规', '网络安全法合规检查', 'prompt_check', 'critical', 'block', 'CN', 'CSL', NULL, NULL, 'package csl
-
-default allow = true
-
-deny[msg] {
-    contains(lower(input.prompt), "vpn")
-    msg := "检测到敏感网络工具讨论"
-}', NOW()),
-
--- 安全规则
-('rule-jailbreak-01', '越狱攻击检测', '检测常见的LLM越狱攻击模式', 'prompt_check', 'critical', 'block', NULL, NULL, NULL, NULL, 'package jailbreak
-
-default allow = true
-
-deny[msg] {
-    contains(lower(input.prompt), "ignore previous instructions")
-    msg := "检测到越狱攻击尝试"
-}
-
-deny[msg] {
-    contains(lower(input.prompt), "你是")
-    contains(lower(input.prompt), "假装")
-    msg := "检测到角色扮演越狱"
-}', NOW()),
-
-('rule-injection-01', '提示注入检测', '检测提示注入攻击', 'prompt_check', 'high', 'block', NULL, NULL, NULL, NULL, 'package injection
-
-default allow = true
-
-deny[msg] {
-    contains(input.prompt, "]]>")
-    msg := "检测到XML注入尝试"
-}
-
-deny[msg] {
-    contains(input.prompt, "<script>")
-    msg := "检测到脚本注入"
-}', NOW()),
-
-('rule-toxic-01', '有害内容检测', '检测有害、非法内容生成请求', 'prompt_check', 'critical', 'block', NULL, NULL, NULL, NULL, 'package toxic
-
-default allow = true
-
-deny[msg] {
-    keywords := ["制作炸弹", "制毒", "黑客攻击"]
-    some keyword
-    contains(lower(input.prompt), keywords[keyword])
-    msg := "检测到有害内容请求"
-}', NOW()),
-
-('rule-pii-detect-01', 'PII 敏感信息检测', '检测并保护个人身份信息', 'output_filter', 'medium', 'mask', NULL, NULL, NULL, NULL, 'package pii
-
-default allow = true
-
-sensitive_patterns := [
-    `\b\d{3}-\d{4}-\d{4}\b`,
-    `\b\d{11}\b`,
-    `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`
-]
-
-deny[msg] {
-    some pattern
-    regex.match(sensitive_patterns[pattern], input.output)
-    msg := sprintf("检测到敏感信息模式: %v", [pattern])
-}', NOW()),
-
--- 厂商特定规则
-('rule-openai-01', 'OpenAI 使用策略', 'OpenAI API 使用合规检查', 'prompt_check', 'medium', 'warn', NULL, NULL, 'OpenAI', 'GPT-4', 'package openai_policy
-
-default allow = true
-
-warn[msg] {
-    count(input.prompt) > 32000
-    msg := "提示词超过GPT-4推荐长度"
-}', NOW()),
-
-('rule-anthropic-01', 'Anthropic 安全策略', 'Claude 模型安全使用检查', 'prompt_check', 'medium', 'warn', NULL, NULL, 'Anthropic', 'Claude', 'package anthropic_policy
-
-default allow = true
-
-warn[msg] {
-    contains(input.prompt, "Human:")
-    contains(input.prompt, "Assistant:")
-    msg := "检测到可能的对话格式注入"
-}', NOW())
-
-ON CONFLICT (id) DO NOTHING;
-
--- ============================================
--- 告警规则 (Alert Rules) - 默认告警配置
--- ============================================
-INSERT INTO alert_rules (id, name, description, event_types, severity_threshold, threshold_count, threshold_window_sec, notify_channels, cooldown_sec, enabled, created_at) VALUES
-('alert-critical-block', '严重阻断告警', '当发生严重等级的内容阻断时立即告警', ARRAY['prompt_blocked', 'output_blocked'], 'critical', 1, 60, ARRAY['wecom', 'email'], 300, true, NOW()),
-('alert-high-frequency', '高频攻击告警', '5分钟内发生10次以上阻断触发告警', ARRAY['prompt_blocked'], 'high', 10, 300, ARRAY['wecom'], 600, true, NOW()),
-('alert-pii-leak', 'PII泄露风险告警', '检测到PII信息泄露风险时告警', ARRAY['pii_detected', 'sensitive_data_masked'], 'medium', 3, 600, ARRAY['email'], 1800, true, NOW()),
-('alert-jailbreak', '越狱攻击告警', '检测到越狱攻击尝试时告警', ARRAY['jailbreak_detected'], 'critical', 1, 60, ARRAY['wecom', 'dingtalk'], 300, true, NOW())
-ON CONFLICT (id) DO NOTHING;
+-- 用于填充初始演示数据
 
 -- ============================================
 -- 工具能力 (Capabilities) - Agent工具权限
+-- 注意: capabilities.id 是 UUID 类型
 -- ============================================
-INSERT INTO capabilities (id, name, description, tags, created_at) VALUES
-('cap-web-browse', 'web-browsing', '允许Agent访问互联网搜索信息', ARRAY['network', 'search'], NOW()),
-('cap-code-exec', 'code-execution', '允许Agent执行代码片段', ARRAY['compute', 'dangerous'], NOW()),
-('cap-file-read', 'file-read', '允许Agent读取本地文件', ARRAY['filesystem', 'data'], NOW()),
-('cap-file-write', 'file-write', '允许Agent写入本地文件', ARRAY['filesystem', 'dangerous'], NOW()),
-('cap-api-call', 'api-call', '允许Agent调用外部API', ARRAY['network', 'integration'], NOW()),
-('cap-db-query', 'database-query', '允许Agent查询数据库', ARRAY['data', 'sensitive'], NOW()),
-('cap-email-send', 'email-send', '允许Agent发送邮件', ARRAY['communication'], NOW()),
-('cap-calendar', 'calendar-access', '允许Agent访问日历', ARRAY['pim', 'data'], NOW())
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO capabilities (id, name, description, tags) VALUES
+(gen_random_uuid(), 'web-browsing', '允许Agent访问互联网搜索信息', '["network", "search"]'::jsonb),
+(gen_random_uuid(), 'code-execution', '允许Agent执行代码片段', '["compute", "dangerous"]'::jsonb),
+(gen_random_uuid(), 'file-read', '允许Agent读取本地文件', '["filesystem", "data"]'::jsonb),
+(gen_random_uuid(), 'file-write', '允许Agent写入本地文件', '["filesystem", "dangerous"]'::jsonb),
+(gen_random_uuid(), 'api-call', '允许Agent调用外部API', '["network", "integration"]'::jsonb),
+(gen_random_uuid(), 'database-query', '允许Agent查询数据库', '["data", "sensitive"]'::jsonb),
+(gen_random_uuid(), 'email-send', '允许Agent发送邮件', '["communication"]'::jsonb),
+(gen_random_uuid(), 'calendar-access', '允许Agent访问日历', '["pim", "data"]'::jsonb)
+ON CONFLICT (name) DO NOTHING;
 
 -- ============================================
--- 演示租户和默认策略
+-- 规则模板 (Rule Templates) - 预定义的规则模板
+-- 注意: 这些模板已在 0006_tenant_rules.sql 中创建
+-- 这里添加更多有用的模板
 -- ============================================
--- 注意: 这部分通常由应用自动创建，这里仅作参考
--- INSERT INTO tenants ... 
--- INSERT INTO policies ...
+INSERT INTO rule_templates (id, name, rule_type, description, config_schema, default_config, tags) VALUES
+(gen_random_uuid(), 'pii_detection', 'business', 'PII 敏感信息检测 - 检测并保护个人隐私数据',
+ '{"type":"object","properties":{"patterns":{"type":"array"},"mask_type":{"type":"string"}}}',
+ '{"enabled":true,"patterns":["phone","id_card","email","bank_card"],"mask_type":"partial","responses":{"detected":"检测到敏感信息，已进行脱敏处理"}}',
+ ARRAY['pii', 'privacy', 'security']),
+
+(gen_random_uuid(), 'jailbreak_detection', 'business', '越狱攻击检测 - 检测常见的LLM越狱攻击模式',
+ '{"type":"object","properties":{"patterns":{"type":"array"},"action":{"type":"string"}}}',
+ '{"enabled":true,"patterns":["ignore previous","forget everything","you are now","pretend to be"],"action":"block","responses":{"blocked":"检测到安全威胁，请求已被阻止"}}',
+ ARRAY['security', 'jailbreak', 'attack']),
+
+(gen_random_uuid(), 'injection_detection', 'business', '提示注入检测 - 检测提示注入攻击',
+ '{"type":"object","properties":{"patterns":{"type":"array"},"action":{"type":"string"}}}',
+ '{"enabled":true,"patterns":["]]>","<script>","${","{{"],"action":"block","responses":{"blocked":"检测到注入攻击，请求已被阻止"}}',
+ ARRAY['security', 'injection', 'attack']),
+
+(gen_random_uuid(), 'gdpr_compliance', 'business', 'GDPR 欧盟数据保护合规 - 确保符合GDPR要求',
+ '{"type":"object","properties":{"regions":{"type":"array"},"data_types":{"type":"array"}}}',
+ '{"enabled":true,"regions":["EU"],"data_types":["name","email","address","phone"],"action":"mask","responses":{"violation":"此内容可能违反GDPR规定"}}',
+ ARRAY['compliance', 'gdpr', 'eu', 'privacy']),
+
+(gen_random_uuid(), 'pipl_compliance', 'business', 'PIPL 中国个人信息保护法合规',
+ '{"type":"object","properties":{"data_types":{"type":"array"}}}',
+ '{"enabled":true,"data_types":["id_card","phone","bank_card","address"],"action":"mask","responses":{"violation":"此内容可能违反《个人信息保护法》"}}',
+ ARRAY['compliance', 'pipl', 'china', 'privacy']),
+
+(gen_random_uuid(), 'toxic_content', 'business', '有害内容检测 - 检测暴力、色情等有害内容',
+ '{"type":"object","properties":{"categories":{"type":"array"}}}',
+ '{"enabled":true,"categories":["violence","adult","illegal","hate_speech"],"action":"block","responses":{"blocked":"检测到有害内容，请求已被阻止"}}',
+ ARRAY['safety', 'toxic', 'content']),
+
+(gen_random_uuid(), 'rate_limiting', 'permission', '请求速率限制 - 限制API调用频率',
+ '{"type":"object","properties":{"max_rpm":{"type":"integer"},"max_tpm":{"type":"integer"}}}',
+ '{"enabled":true,"max_rpm":60,"max_tpm":100000,"action":"throttle","responses":{"exceeded":"请求频率过高，请稍后再试"}}',
+ ARRAY['rate', 'limit', 'quota'])
+
+ON CONFLICT (name) DO NOTHING;
+
+-- 注意: alert_rules 已在 0009_alert_system.sql 中有默认值
+-- 如需添加更多告警规则，取消下面的注释
+
+-- INSERT INTO alert_rules (tenant_id, name, description, event_types, severity_threshold, threshold_count, threshold_window_sec, notify_channels, priority) VALUES
+-- (NULL, 'high_token_usage', '高Token消耗告警', ARRAY['high_usage'], 'medium', 1, 3600, ARRAY['webhook'], 30)
+-- ON CONFLICT DO NOTHING;
