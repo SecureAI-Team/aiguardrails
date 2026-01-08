@@ -64,9 +64,11 @@ const loading = ref(false)
 
 async function loadTenants() {
   try {
-    tenants.value = await api.listTenants()
+    const result = await api.listTenants()
+    tenants.value = Array.isArray(result) ? result : []
   } catch (e) {
     console.error(e)
+    tenants.value = []
   }
 }
 
@@ -74,9 +76,11 @@ async function loadHistory() {
   if (!selectedTenantId.value) return
   loading.value = true
   try {
-    history.value = await api.listPolicyHistory(selectedTenantId.value)
+    const result = await api.listPolicyHistory(selectedTenantId.value)
+    history.value = Array.isArray(result) ? result : []
   } catch (e) {
     console.error(e)
+    history.value = []
   } finally {
     loading.value = false
   }

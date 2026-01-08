@@ -125,8 +125,11 @@ onMounted(() => loadRules())
 
 async function loadRules() {
   try {
-    rules.value = await api.get('/alerts/rules')
-  } catch { rules.value = [] }
+    const result = await api.get('/alerts/rules')
+    rules.value = Array.isArray(result) ? result : []
+  } catch { 
+    rules.value = [] 
+  }
 }
 
 function channelLabel(ch: string) {

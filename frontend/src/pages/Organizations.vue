@@ -153,7 +153,12 @@ watch(selectedOrg, (org) => {
 })
 
 async function loadOrgs() {
-  try { orgs.value = await api.get('/orgs') } catch { orgs.value = [] }
+  try { 
+    const result = await api.get('/orgs')
+    orgs.value = Array.isArray(result) ? result : []
+  } catch { 
+    orgs.value = [] 
+  }
 }
 
 async function createOrg() {

@@ -129,13 +129,15 @@ const form = reactive({
 
 async function loadTenants() {
   try {
-    tenants.value = await api.listTenants()
+    const result = await api.listTenants()
+    tenants.value = Array.isArray(result) ? result : []
     if (route.query.tenantId) {
       selectedTenantId.value = route.query.tenantId as string
       loadPolicies()
     }
   } catch (e) {
     console.error(e)
+    tenants.value = []
   }
 }
 
@@ -143,9 +145,11 @@ async function loadPolicies() {
   if (!selectedTenantId.value) return
   loading.value = true
   try {
-    policies.value = await api.listPolicies(selectedTenantId.value)
+    const result = await api.listPolicies(selectedTenantId.value)
+    policies.value = Array.isArray(result) ? result : []
   } catch (e) {
     console.error(e)
+    policies.value = []
   } finally {
     loading.value = false
   }
@@ -153,9 +157,11 @@ async function loadPolicies() {
 
 async function loadCaps() {
   try {
-    caps.value = await api.listCapabilities()
+    const result = await api.listCapabilities()
+    caps.value = Array.isArray(result) ? result : []
   } catch (e) {
     console.error(e)
+    caps.value = []
   }
 }
 

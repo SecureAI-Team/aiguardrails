@@ -91,8 +91,11 @@ onMounted(() => loadAlerts())
 async function loadAlerts() {
   try {
     const query = filterSeverity.value ? `?severity=${filterSeverity.value}` : ''
-    alerts.value = await api.get(`/alerts/history${query}`)
-  } catch { alerts.value = [] }
+    const result = await api.get(`/alerts/history${query}`)
+    alerts.value = Array.isArray(result) ? result : []
+  } catch { 
+    alerts.value = [] 
+  }
 }
 
 function countBySeverity(sev: string) {

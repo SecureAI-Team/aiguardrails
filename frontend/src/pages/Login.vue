@@ -73,11 +73,15 @@
           <!-- Social Login -->
           <div class="divider"><span>第三方登录</span></div>
           <div class="social-buttons">
-            <button @click="loginWeChat" class="social-btn wechat">
-              <span class="icon">💬</span>
+            <button @click="loginWeChat" class="social-btn wechat" title="微信登录">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="#07C160">
+                <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.32.32 0 0 0 .168-.054l1.903-1.114a.86.86 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-5.506 2.625-7.194 2.468-1.688 5.867-1.962 8.63-.695C19.357 5.127 15.455 2.188 8.69 2.188zm12.618 7.343c-4.045 0-7.309 2.635-7.309 5.884 0 3.248 3.264 5.883 7.309 5.883.748 0 1.479-.095 2.172-.273a.68.68 0 0 1 .55.077l1.467.858a.24.24 0 0 0 .13.041.224.224 0 0 0 .219-.226c0-.055-.023-.11-.037-.163l-.3-1.138a.46.46 0 0 1 .163-.51c1.406-1.037 2.303-2.567 2.303-4.203 0-3.249-3.264-5.883-7.309-5.883z"/>
+              </svg>
             </button>
-            <button @click="loginAlipay" class="social-btn alipay">
-              <span class="icon">💰</span>
+            <button @click="loginAlipay" class="social-btn alipay" title="支付宝登录">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="#1677FF">
+                <path d="M21.422 15.358c-1.389-.56-6.12-2.47-7.992-3.093.678-1.559 1.168-3.346 1.335-5.265h-4.457V5.651h5.269V4.401h-5.269V1.5h-2.54v2.901H2.5v1.25h5.268V7h-4.457v1.25h9.926c-.142 1.397-.491 2.673-.981 3.809-1.594-.556-3.282-.868-4.869-.868-3.218 0-5.387 1.333-5.387 3.485 0 2.152 2.169 3.485 5.387 3.485 2.576 0 4.917-.868 6.648-2.295 1.639.868 5.636 2.62 7.016 3.207.357.152.733-.155.612-.525zm-14.035 1.103c-2.152 0-3.485-.868-3.485-2.152s1.333-2.152 3.485-2.152c1.333 0 2.737.265 4.07.715-1.233 2.152-2.737 3.589-4.07 3.589z"/>
+              </svg>
             </button>
           </div>
 
@@ -388,14 +392,14 @@ async function loginAlipay() {
 /* Social Buttons */
 .social-buttons {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   justify-content: center;
 }
 .social-btn {
-  width: 60px;
-  height: 60px;
-  border: 2px solid #e2e8f0;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   background: white;
   cursor: pointer;
   display: flex;
@@ -403,7 +407,7 @@ async function loginAlipay() {
   justify-content: center;
   transition: all 0.2s;
 }
-.social-btn .icon { font-size: 1.8rem; }
+.social-btn .icon { font-size: 1.2rem; }
 .social-btn.wechat:hover { background: #f0fff4; border-color: #22c55e; }
 .social-btn.alipay:hover { background: #eff6ff; border-color: #3b82f6; }
 

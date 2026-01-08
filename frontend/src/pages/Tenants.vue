@@ -67,9 +67,11 @@ const form = reactive({
 
 async function load() {
   try {
-    tenants.value = await api.listTenants()
+    const result = await api.listTenants()
+    tenants.value = Array.isArray(result) ? result : []
   } catch (e) {
     console.error(e)
+    tenants.value = []
   }
 }
 

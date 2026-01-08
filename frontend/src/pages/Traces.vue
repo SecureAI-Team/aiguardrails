@@ -95,8 +95,11 @@ onMounted(() => loadTraces())
 async function loadTraces() {
   try {
     const query = filterBlocked.value ? `?blocked=${filterBlocked.value}` : ''
-    traces.value = await api.get(`/traces${query}`)
-  } catch { traces.value = [] }
+    const result = await api.get(`/traces${query}`)
+    traces.value = Array.isArray(result) ? result : []
+  } catch { 
+    traces.value = [] 
+  }
 }
 
 function getStatusClass(code: number) {

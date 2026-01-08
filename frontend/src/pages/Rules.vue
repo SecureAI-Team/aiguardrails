@@ -81,9 +81,11 @@ const filters = reactive({
 async function load() {
   loading.value = true
   try {
-    rules.value = await api.listRules(filters)
+    const result = await api.listRules(filters)
+    rules.value = Array.isArray(result) ? result : []
   } catch (e) {
     console.error(e)
+    rules.value = []
   } finally {
     loading.value = false
   }

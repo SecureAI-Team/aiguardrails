@@ -146,9 +146,11 @@ async function loadUsers() {
   try {
     const params = new URLSearchParams()
     if (filterRole.value) params.append('role', filterRole.value)
-    users.value = await api.get(`/users?${params}`)
+    const result = await api.get(`/users?${params}`)
+    users.value = Array.isArray(result) ? result : []
   } catch (e) {
     console.error(e)
+    users.value = []
   } finally {
     loading.value = false
   }

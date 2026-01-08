@@ -1,78 +1,81 @@
 <template>
-  <div class="playground-page">
-    <div class="page-header">
-      <h2>🧪 API调试控制台</h2>
-    </div>
-
-    <div class="playground-container">
-      <div class="request-panel">
-        <div class="panel-header">
-          <h3>请求</h3>
-        </div>
-        <div class="form-group">
-          <label>API端点</label>
-          <select v-model="endpoint">
-            <option value="/v1/guardrails/prompt-check">提示词检查</option>
-            <option value="/v1/guardrails/output-filter">输出过滤</option>
-            <option value="/v1/guardrails/rag-check">RAG检查</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>API Key</label>
-          <input v-model="apiKey" type="password" placeholder="sk_your_api_key" />
-        </div>
-        <div class="form-group">
-          <label>请求体 (JSON)</label>
-          <textarea v-model="requestBody" rows="10" placeholder='{"prompt": "测试内容"}'></textarea>
-        </div>
-        <button @click="sendRequest" class="btn-primary" :disabled="loading">
-          {{ loading ? '发送中...' : '🚀 发送请求' }}
-        </button>
+  <LandingLayout>
+    <div class="playground-page">
+      <div class="page-header">
+        <h2>🧪 API调试控制台</h2>
       </div>
 
-      <div class="response-panel">
-        <div class="panel-header">
-          <h3>响应</h3>
-          <span v-if="responseTime" class="response-time">{{ responseTime }}ms</span>
-        </div>
-        <div v-if="response" class="response-content">
-          <div class="response-status" :class="statusClass">
-            {{ responseStatus }}
+      <div class="playground-container">
+        <div class="request-panel">
+          <div class="panel-header">
+            <h3>请求</h3>
           </div>
-          <pre class="response-body">{{ formatJSON(response) }}</pre>
+          <div class="form-group">
+            <label>API端点</label>
+            <select v-model="endpoint">
+              <option value="/v1/guardrails/prompt-check">提示词检查</option>
+              <option value="/v1/guardrails/output-filter">输出过滤</option>
+              <option value="/v1/guardrails/rag-check">RAG检查</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>API Key</label>
+            <input v-model="apiKey" type="password" placeholder="sk_your_api_key" />
+          </div>
+          <div class="form-group">
+            <label>请求体 (JSON)</label>
+            <textarea v-model="requestBody" rows="10" placeholder='{"prompt": "测试内容"}'></textarea>
+          </div>
+          <button @click="sendRequest" class="btn-primary" :disabled="loading">
+            {{ loading ? '发送中...' : '🚀 发送请求' }}
+          </button>
         </div>
-        <div v-else class="response-placeholder">
-          点击"发送请求"查看响应结果
-        </div>
-      </div>
-    </div>
 
-    <div class="examples-section">
-      <h3>📝 示例请求</h3>
-      <div class="examples-grid">
-        <div class="example-card" @click="loadExample('normal')">
-          <span class="example-icon">✅</span>
-          <span>正常内容</span>
+        <div class="response-panel">
+          <div class="panel-header">
+            <h3>响应</h3>
+            <span v-if="responseTime" class="response-time">{{ responseTime }}ms</span>
+          </div>
+          <div v-if="response" class="response-content">
+            <div class="response-status" :class="statusClass">
+              {{ responseStatus }}
+            </div>
+            <pre class="response-body">{{ formatJSON(response) }}</pre>
+          </div>
+          <div v-else class="response-placeholder">
+            点击"发送请求"查看响应结果
+          </div>
         </div>
-        <div class="example-card" @click="loadExample('injection')">
-          <span class="example-icon">⚠️</span>
-          <span>注入攻击</span>
-        </div>
-        <div class="example-card" @click="loadExample('sensitive')">
-          <span class="example-icon">🔒</span>
-          <span>敏感数据</span>
-        </div>
-        <div class="example-card" @click="loadExample('toxic')">
-          <span class="example-icon">🚫</span>
-          <span>有害内容</span>
+      </div>
+
+      <div class="examples-section">
+        <h3>📝 示例请求</h3>
+        <div class="examples-grid">
+          <div class="example-card" @click="loadExample('normal')">
+            <span class="example-icon">✅</span>
+            <span>正常内容</span>
+          </div>
+          <div class="example-card" @click="loadExample('injection')">
+            <span class="example-icon">⚠️</span>
+            <span>注入攻击</span>
+          </div>
+          <div class="example-card" @click="loadExample('sensitive')">
+            <span class="example-icon">🔒</span>
+            <span>敏感数据</span>
+          </div>
+          <div class="example-card" @click="loadExample('toxic')">
+            <span class="example-icon">🚫</span>
+            <span>有害内容</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </LandingLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import LandingLayout from '../components/LandingLayout.vue'
 
 const endpoint = ref('/v1/guardrails/prompt-check')
 const apiKey = ref('')
@@ -130,9 +133,9 @@ function loadExample(type: string) {
 </script>
 
 <style scoped>
-.playground-page { padding: 20px; }
+.playground-page { padding: 40px 48px; }
 .page-header { margin-bottom: 24px; }
-.page-header h2 { margin: 0; }
+.page-header h2 { margin: 0; color: #1e293b; }
 .playground-container { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
 .request-panel, .response-panel { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }

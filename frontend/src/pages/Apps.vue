@@ -137,17 +137,17 @@ const form = reactive({
 
 async function loadTenants() {
   try {
-    tenants.value = await api.listTenants()
+    const result = await api.listTenants()
+    tenants.value = Array.isArray(result) ? result : []
     // Auto select if query param exists
     const qTenant = route.query.tenantId as string
     if (qTenant) {
       selectedTenantId.value = qTenant
       loadApps()
-    } else if (tenants.value.length > 0) {
-      // Optional: Auto select first tenant? No, force user to select.
     }
   } catch (e) {
     console.error(e)
+    tenants.value = []
   }
 }
 
@@ -155,9 +155,11 @@ async function loadApps() {
   if (!selectedTenantId.value) return
   loading.value = true
   try {
-    apps.value = await api.listApps(selectedTenantId.value)
+    const result = await api.listApps(selectedTenantId.value)
+    apps.value = Array.isArray(result) ? result : []
   } catch (e) {
     console.error(e)
+    apps.value = []
   } finally {
     loading.value = false
   }

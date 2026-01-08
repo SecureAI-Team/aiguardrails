@@ -85,9 +85,11 @@ const form = reactive({
 async function load() {
   loading.value = true
   try {
-    caps.value = await api.listCapabilities(filterTag.value || undefined)
+    const result = await api.listCapabilities(filterTag.value || undefined)
+    caps.value = Array.isArray(result) ? result : []
   } catch (e) {
     console.error(e)
+    caps.value = []
   } finally {
     loading.value = false
   }

@@ -1,217 +1,308 @@
 <template>
-  <div class="dashboard">
-    <header class="dash-header">
-      <div class="greeting">
-        <h1>👋 欢迎回来, {{ user.display_name || user.username }}</h1>
-        <p>{{ today }} | 上次登录: {{ lastLogin }}</p>
+  <div class="dashboard-page">
+    <div class="welcome-banner">
+      <div class="welcome-text">
+        <h1>👋 早安，{{ user.display_name || user.username }}</h1>
+        <p>今天是 {{ today }}，系统运行正常。</p>
       </div>
-      <div class="header-actions">
-        <router-link to="/profile" class="btn-outline">个人设置</router-link>
+      <div class="welcome-actions">
+        <router-link to="/profile" class="btn-glass">个人设置</router-link>
       </div>
-    </header>
+    </div>
 
     <!-- Stats Cards -->
-    <section class="stats-section">
+    <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon blue">📊</div>
-        <div class="stat-info">
-          <span class="stat-value">{{ stats.requests }}</span>
-          <span class="stat-label">今日请求</span>
+        <div class="stat-icon bg-blue-100 text-blue-600">🏢</div>
+        <div class="stat-content">
+          <span class="stat-value">{{ stats.tenants }}</span>
+          <span class="stat-label">租户数量</span>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon red">🚫</div>
-        <div class="stat-info">
+        <div class="stat-icon bg-purple-100 text-purple-600">📱</div>
+        <div class="stat-content">
+          <span class="stat-value">{{ stats.apps }}</span>
+          <span class="stat-label">应用总数</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-green-100 text-green-600">🛡️</div>
+        <div class="stat-content">
+          <span class="stat-value">{{ stats.policies }}</span>
+          <span class="stat-label">活跃策略</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-orange-100 text-orange-600">🚫</div>
+        <div class="stat-content">
           <span class="stat-value">{{ stats.blocked }}</span>
-          <span class="stat-label">阻断次数</span>
+          <span class="stat-label">今日阻断</span>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon yellow">⚠️</div>
-        <div class="stat-info">
-          <span class="stat-value">{{ stats.alerts }}</span>
-          <span class="stat-label">安全告警</span>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon green">✅</div>
-        <div class="stat-info">
-          <span class="stat-value">{{ stats.passRate }}%</span>
-          <span class="stat-label">通过率</span>
-        </div>
-      </div>
-    </section>
+    </div>
 
-    <div class="dash-grid">
-      <!-- Quick Actions -->
-      <section class="card quick-actions">
-        <h3>⚡ 快捷操作</h3>
-        <div class="action-list">
-          <router-link to="/" class="action-item">
-            <span class="action-icon">🏢</span>
-            <span>管理租户</span>
-          </router-link>
-          <router-link to="/apps" class="action-item">
-            <span class="action-icon">📱</span>
-            <span>管理应用</span>
-          </router-link>
-          <router-link to="/policies" class="action-item">
-            <span class="action-icon">📋</span>
-            <span>配置策略</span>
-          </router-link>
-          <router-link to="/rules" class="action-item">
-            <span class="action-icon">📜</span>
-            <span>管理规则</span>
-          </router-link>
-          <router-link to="/users" class="action-item">
-            <span class="action-icon">👥</span>
-            <span>用户管理</span>
-          </router-link>
-          <router-link to="/logs" class="action-item">
-            <span class="action-icon">📝</span>
-            <span>审计日志</span>
-          </router-link>
-        </div>
-      </section>
+    <div class="dashboard-content">
+      <div class="main-column">
+        <!-- Quick Actions -->
+        <section class="panel quick-actions-panel">
+          <h3>⚡ 快捷操作</h3>
+          <div class="action-grid">
+            <router-link to="/tenants" class="action-card">
+              <span class="action-icon">🏢</span>
+              <span class="action-name">管理租户</span>
+            </router-link>
+            <router-link to="/apps" class="action-card">
+              <span class="action-icon">📱</span>
+              <span class="action-name">管理应用</span>
+            </router-link>
+            <router-link to="/policies" class="action-card">
+              <span class="action-icon">📋</span>
+              <span class="action-name">配置策略</span>
+            </router-link>
+            <router-link to="/rules" class="action-card">
+              <span class="action-icon">📜</span>
+              <span class="action-name">规则库</span>
+            </router-link>
+            <router-link to="/alerts" class="action-card">
+              <span class="action-icon">🚨</span>
+              <span class="action-name">告警中心</span>
+            </router-link>
+            <router-link to="/logs" class="action-card">
+              <span class="action-icon">📝</span>
+              <span class="action-name">审计日志</span>
+            </router-link>
+          </div>
+        </section>
 
-      <!-- Recent Events -->
-      <section class="card recent-events">
-        <h3>🔔 安全事件</h3>
-        <div class="event-list">
-          <div v-for="event in events" :key="event.id" class="event-item" :class="'severity-' + event.severity">
-            <span class="event-icon">{{ severityIcon(event.severity) }}</span>
-            <div class="event-content">
-              <span class="event-title">{{ event.title }}</span>
-              <span class="event-time">{{ event.time }}</span>
+        <!-- Traces Chart (Mock for now, real data points) -->
+        <section class="panel">
+          <h3>📈 流量趋势 (最近24小时)</h3>
+          <div class="chart-box">
+             <!-- Simple CSS Bar Chart -->
+             <div class="bar-chart">
+               <div v-for="(v, i) in trafficData" :key="i" class="bar-col">
+                 <div class="bar-fill" :style="{ height: v + '%' }"></div>
+                 <span class="bar-label">{{ i * 2 }}:00</span>
+               </div>
+             </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="side-column">
+        <!-- Recent Audits -->
+        <section class="panel">
+          <h3>🔔 最近活动</h3>
+          <div class="activity-feed">
+             <div v-for="log in recentLogs" :key="log.id" class="feed-item">
+               <div class="feed-icon" :class="getEventClass(log.event)">●</div>
+               <div class="feed-content">
+                 <div class="feed-text">
+                   <span class="font-medium">{{ log.user_id || 'System' }}</span>
+                   {{ log.event }}
+                 </div>
+                 <div class="feed-time">{{ formatTime(log.created_at) }}</div>
+               </div>
+             </div>
+             <div v-if="recentLogs.length === 0" class="empty-feed">暂无活动</div>
+          </div>
+          <router-link to="/logs" class="view-all">查看全部 →</router-link>
+        </section>
+
+        <!-- System Status -->
+        <section class="panel system-status-panel">
+          <h3>🖥️ 系统状态</h3>
+          <div class="status-items">
+            <div class="status-row">
+               <span>API 服务</span>
+               <span class="badge badge-success">运行中</span>
+            </div>
+            <div class="status-row">
+               <span>数据库</span>
+               <span class="badge badge-success">已连接</span>
+            </div>
+            <div class="status-row">
+               <span>Redis</span>
+               <span class="badge badge-success">已连接</span>
             </div>
           </div>
-          <div v-if="events.length === 0" class="no-events">
-            ✨ 暂无安全事件，系统运行正常
-          </div>
-        </div>
-      </section>
-
-      <!-- Recent Activity -->
-      <section class="card recent-activity">
-        <h3>📅 最近活动</h3>
-        <div class="activity-list">
-          <div v-for="act in activities" :key="act.id" class="activity-item">
-            <span class="activity-icon">{{ act.icon }}</span>
-            <div class="activity-content">
-              <span class="activity-title">{{ act.title }}</span>
-              <span class="activity-time">{{ act.time }}</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- System Status -->
-      <section class="card system-status">
-        <h3>🖥️ 系统状态</h3>
-        <div class="status-list">
-          <div class="status-item">
-            <span>API服务</span>
-            <span class="status-badge online">运行中</span>
-          </div>
-          <div class="status-item">
-            <span>OPA引擎</span>
-            <span class="status-badge online">运行中</span>
-          </div>
-          <div class="status-item">
-            <span>数据库</span>
-            <span class="status-badge online">正常</span>
-          </div>
-          <div class="status-item">
-            <span>Redis缓存</span>
-            <span class="status-badge online">正常</span>
-          </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { api } from '../services/api'
 
 const user = ref({ username: 'admin', display_name: '' })
 const today = new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-const lastLogin = ref('10分钟前')
 
 const stats = ref({
-  requests: 1248,
-  blocked: 45,
-  alerts: 3,
-  passRate: 96.4
+  tenants: 0,
+  apps: 0,
+  policies: 0,
+  blocked: 0
 })
 
-const events = ref([
-  { id: 1, title: '检测到提示注入攻击尝试', severity: 'high', time: '10分钟前' },
-  { id: 2, title: '竞品厂商查询被阻断', severity: 'medium', time: '1小时前' },
-  { id: 3, title: '敏感信息脱敏处理', severity: 'low', time: '3小时前' }
-])
+const recentLogs = ref<any[]>([])
+const trafficData = ref<number[]>([10, 25, 15, 40, 35, 20, 45, 60, 50, 30, 25, 10])
 
-const activities = ref([
-  { id: 1, icon: '📋', title: '策略「工业安全」已更新', time: '2小时前' },
-  { id: 2, icon: '👤', title: '新用户 engineer01 加入', time: '5小时前' },
-  { id: 3, icon: '📱', title: '应用「PLC助手」密钥已轮转', time: '昨天' }
-])
+onMounted(async () => {
+  loadUser()
+  loadStats()
+})
 
-onMounted(() => {
+function loadUser() {
   const token = localStorage.getItem('auth_token')
   if (token) {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]))
-      user.value.username = payload.sub || 'admin'
+      user.value = { 
+        username: payload.sub || 'admin',
+        display_name: payload.display_name || ''
+      }
     } catch {}
   }
-})
+}
 
-function severityIcon(severity: string) {
-  const icons: Record<string, string> = { high: '🔴', medium: '🟡', low: '🟢' }
-  return icons[severity] || '⚪'
+async function loadStats() {
+  try {
+    // Parallel loading
+    const [tenantsResult, logsResult] = await Promise.all([
+      api.listTenants().catch(() => []),
+      api.listAudit(5).catch(() => [])
+    ])
+    
+    const tenants = Array.isArray(tenantsResult) ? tenantsResult : []
+    const logs = Array.isArray(logsResult) ? logsResult : []
+    
+    stats.value.tenants = tenants.length
+    
+    // Fetch apps for each tenant (capped to first 5 tenants to avoid flooding)
+    let totalApps = 0
+    let totalPolicies = 0
+    for (const t of tenants.slice(0, 5)) {
+      try {
+        const appsResult = await api.listApps(t.id)
+        const apps = Array.isArray(appsResult) ? appsResult : []
+        totalApps += apps.length
+        
+        const policiesResult = await api.listPolicies(t.id)
+        const policies = Array.isArray(policiesResult) ? policiesResult : []
+        totalPolicies += policies.length
+      } catch {}
+    }
+    stats.value.apps = totalApps
+    stats.value.policies = totalPolicies
+    
+    recentLogs.value = logs
+    
+    // Attempt to get trace stats if available
+    try {
+      const traces = await api.get('/traces?blocked=true&limit=10')
+      if (Array.isArray(traces)) {
+         stats.value.blocked = traces.length
+      }
+    } catch {}
+    
+  } catch (e) {
+    console.error('Failed to load dashboard stats', e)
+  }
+}
+
+function getEventClass(event: string) {
+  if (event.includes('delete') || event.includes('block')) return 'text-red-500'
+  if (event.includes('create')) return 'text-green-500'
+  return 'text-blue-500'
+}
+
+function formatTime(ts: string) {
+  if (!ts) return ''
+  const d = new Date(ts)
+  const now = new Date()
+  const diff = (now.getTime() - d.getTime()) / 1000
+  if (diff < 60) return '刚刚'
+  if (diff < 3600) return Math.floor(diff / 60) + '分钟前'
+  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 </script>
 
 <style scoped>
-.dashboard { padding: 30px; background: #f1f5f9; min-height: 100vh; }
+.dashboard-page { padding: 24px; max-width: 1400px; margin: 0 auto; }
 
-.dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-.greeting h1 { font-size: 1.75rem; margin: 0; color: #1e293b; }
-.greeting p { color: #64748b; margin-top: 4px; }
-.btn-outline { border: 1px solid #cbd5e1; padding: 10px 20px; border-radius: 8px; text-decoration: none; color: #475569; }
+.welcome-banner { 
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); 
+  padding: 30px; 
+  border-radius: 16px; 
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+}
+.welcome-text h1 { margin: 0 0 8px; font-size: 1.8rem; }
+.welcome-text p { margin: 0; opacity: 0.9; }
+.btn-glass {
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-glass:hover { background: rgba(255,255,255,0.3); }
 
-.stats-section { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
-.stat-card { background: white; padding: 24px; border-radius: 12px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
-.stat-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-.stat-icon.blue { background: #eff6ff; }
-.stat-icon.red { background: #fef2f2; }
-.stat-icon.yellow { background: #fffbeb; }
-.stat-icon.green { background: #f0fdf4; }
-.stat-value { font-size: 1.75rem; font-weight: 700; color: #1e293b; display: block; }
-.stat-label { color: #64748b; font-size: 0.875rem; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 32px; }
+.stat-card { background: white; padding: 24px; border-radius: 12px; display: flex; align-items: center; gap: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.stat-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; }
+.stat-content { display: flex; flex-direction: column; }
+.stat-value { font-size: 2rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
+.stat-label { color: #64748b; font-size: 0.9rem; }
 
-.dash-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
-.card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
-.card h3 { margin: 0 0 20px; font-size: 1.1rem; color: #1e293b; }
+.dashboard-content { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+.panel { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px; }
+.panel h3 { margin: 0 0 20px; color: #1e293b; font-size: 1.1rem; }
 
-.action-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.action-item { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px; background: #f8fafc; border-radius: 10px; text-decoration: none; color: #1e293b; transition: background 0.2s; }
-.action-item:hover { background: #e2e8f0; }
-.action-icon { font-size: 1.75rem; }
+.action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.action-card { 
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px; background: #f8fafc; border-radius: 12px; text-decoration: none; color: #334155;
+  transition: all 0.2s; border: 1px solid transparent;
+}
+.action-card:hover { background: white; border-color: #e2e8f0; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.action-icon { font-size: 2rem; margin-bottom: 12px; }
+.action-name { font-weight: 500; }
 
-.event-list, .activity-list { display: flex; flex-direction: column; gap: 12px; }
-.event-item, .activity-item { display: flex; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; }
-.event-item.severity-high { border-left: 3px solid #ef4444; }
-.event-item.severity-medium { border-left: 3px solid #f59e0b; }
-.event-item.severity-low { border-left: 3px solid #10b981; }
-.event-content, .activity-content { flex: 1; }
-.event-title, .activity-title { display: block; font-weight: 500; color: #1e293b; }
-.event-time, .activity-time { font-size: 0.8rem; color: #94a3b8; }
-.no-events { text-align: center; color: #64748b; padding: 30px; }
+.chart-box { height: 200px; display: flex; align-items: flex-end; }
+.bar-chart { display: flex; width: 100%; height: 100%; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+.bar-fill { width: 100%; background: #3b82f6; border-radius: 4px 4px 0 0; opacity: 0.8; transition: height 0.5s; min-height: 4px; }
+.bar-label { margin-top: 8px; font-size: 0.75rem; color: #94a3b8; }
 
-.status-list { display: flex; flex-direction: column; gap: 12px; }
-.status-item { display: flex; justify-content: space-between; padding: 12px; background: #f8fafc; border-radius: 8px; }
-.status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
-.status-badge.online { background: #d1fae5; color: #065f46; }
+.activity-feed { display: flex; flex-direction: column; gap: 16px; }
+.feed-item { display: flex; gap: 12px; align-items: flex-start; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9; }
+.feed-item:last-child { border-bottom: none; }
+.feed-icon { font-size: 0.8rem; margin-top: 4px; }
+.feed-text { font-size: 0.95rem; color: #334155; margin-bottom: 4px; }
+.feed-time { font-size: 0.8rem; color: #94a3b8; }
+.view-all { display: block; text-align: center; margin-top: 16px; color: #2563eb; text-decoration: none; font-size: 0.9rem; }
+
+.status-items { display: flex; flex-direction: column; gap: 12px; }
+.status-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 8px; }
+.badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+.badge-success { background: #dcfce7; color: #166534; }
+
+/* Utilities */
+.bg-blue-100 { background: #dbeafe; } .text-blue-600 { color: #2563eb; }
+.bg-purple-100 { background: #f3e8ff; } .text-purple-600 { color: #9333ea; }
+.bg-green-100 { background: #dcfce7; } .text-green-600 { color: #16a34a; }
+.bg-orange-100 { background: #ffedd5; } .text-orange-600 { color: #ea580c; }
+.text-red-500 { color: #ef4444; } .text-blue-500 { color: #3b82f6; } .text-green-500 { color: #10b981; }
 </style>

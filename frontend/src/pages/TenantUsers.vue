@@ -109,10 +109,12 @@ async function loadData() {
       api.get('/users'),
       api.get(`/tenants/${tenantId}/users`)
     ])
-    allUsers.value = usersRes
-    tenantUsers.value = tenantUsersRes
+    allUsers.value = Array.isArray(usersRes) ? usersRes : []
+    tenantUsers.value = Array.isArray(tenantUsersRes) ? tenantUsersRes : []
   } catch (e) {
     console.error(e)
+    allUsers.value = []
+    tenantUsers.value = []
   } finally {
     loading.value = false
   }

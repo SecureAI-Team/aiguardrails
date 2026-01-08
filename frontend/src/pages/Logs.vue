@@ -23,26 +23,26 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(log, idx) in logs" :key="idx" class="log-row">
-            <td class="whitespace-nowrap">{{ new Date(log.created_at).toLocaleString() }}</td>
-            <td>
-              <span :class="['badge', getEventColor(log.event)]">{{ log.event }}</span>
-            </td>
-            <td class="font-mono text-sm">{{ log.tenant_id || '-' }}</td>
-            <td>{{ log.user_id || log.actor || '-' }}</td>
-            <td>
-              <button @click="toggleDetail(idx)" class="btn-xs btn-link">
-                {{ expandedRows.has(idx) ? '收起' : '查看' }}
-              </button>
-            </td>
-          </tr>
-          <tr v-if="expandedRows.has(idx)" class="detail-row" v-for="(log, idx) in logs" :key="'detail-'+idx">
-            <template v-if="expandedRows.has(idx)">
+          <template v-for="(log, idx) in logs" :key="idx">
+            <tr class="log-row" @click="toggleDetail(idx)">
+              <td class="whitespace-nowrap">{{ new Date(log.created_at).toLocaleString() }}</td>
+              <td>
+                <span :class="['badge', getEventColor(log.event)]">{{ log.event }}</span>
+              </td>
+              <td class="font-mono text-sm">{{ log.tenant_id || '-' }}</td>
+              <td>{{ log.user_id || log.actor || '-' }}</td>
+              <td>
+                <button class="btn-xs btn-link">
+                  {{ expandedRows.has(idx) ? '▼ 收起' : '▶ 查看' }}
+                </button>
+              </td>
+            </tr>
+            <tr v-if="expandedRows.has(idx)" class="detail-row">
               <td colspan="5">
                 <pre class="json-viewer">{{ JSON.stringify(log, null, 2) }}</pre>
               </td>
-            </template>
-          </tr>
+            </tr>
+          </template>
           <tr v-if="logs.length === 0">
             <td colspan="5" class="empty-state">暂无日志</td>
           </tr>
@@ -69,9 +69,11 @@ const filters = reactive({
 async function load() {
   loading.value = true
   try {
-    logs.value = await api.listAudit(filters.limit, filters.event || undefined, filters.tenantId || undefined)
+    const result = await api.listAudit(filters.limit, filters.event || undefined, filters.tenantId || undefined)
+    logs.value = Array.isArray(result) ? result : []
   } catch (e) {
     console.error(e)
+    logs.value = []
   } finally {
     loading.value = false
   }
@@ -83,6 +85,8 @@ function toggleDetail(idx: number) {
   } else {
     expandedRows.value.add(idx)
   }
+  // Force reactivity
+  expandedRows.value = new Set(expandedRows.value)
 }
 
 function getEventColor(event: string) {
@@ -112,6 +116,7 @@ onMounted(load)
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th, .data-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e2e8f0; }
 .data-table th { background: #f8fafc; font-weight: 600; color: #64748b; font-size: 0.875rem; }
+.log-row { cursor: pointer; }
 .log-row:hover { background: #f8fafc; }
 
 .detail-row td { background: #f1f5f9; padding: 0; }
@@ -123,6 +128,8 @@ onMounted(load)
   font-family: monospace;
   font-size: 0.85rem;
   overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .badge { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
@@ -133,7 +140,8 @@ onMounted(load)
 
 .btn-primary { background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
 .btn-primary:disabled { opacity: 0.7; }
-.btn-link { background: none; border: none; color: #2563eb; cursor: pointer; padding: 0; text-decoration: underline; }
+.btn-link { background: none; border: none; color: #2563eb; cursor: pointer; padding: 0; font-size: 0.85rem; }
+.btn-xs { font-size: 0.8rem; }
 
 .font-mono { font-family: monospace; color: #64748b; }
 .text-sm { font-size: 0.875rem; }
