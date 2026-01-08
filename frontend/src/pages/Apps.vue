@@ -5,7 +5,7 @@
       <div class="header-actions">
         <select v-model="selectedTenantId" @change="onTenantChange" class="tenant-select">
           <option value="" disabled>请选择租户</option>
-          <option v-for="t in tenants" :key="t.id" :value="t.id">{{ t.name }} ({{ t.id.substring(0,8) }})</option>
+          <option v-for="t in tenants" :key="t.id" :value="t.id">{{ t.name || '未命名' }} ({{ (t.id || '').substring(0,8) }})</option>
         </select>
         <button @click="openCreateModal" class="btn-primary" :disabled="!selectedTenantId">
           + 新建应用
