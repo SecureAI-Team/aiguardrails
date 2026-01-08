@@ -8,11 +8,13 @@ import (
 	"time"
 
 	"aiguardrails/internal/agent"
+	"aiguardrails/internal/alert"
 	"aiguardrails/internal/audit"
 	"aiguardrails/internal/auth"
 	"aiguardrails/internal/config"
 	"aiguardrails/internal/mcp"
 	"aiguardrails/internal/opa"
+	"aiguardrails/internal/org"
 	"aiguardrails/internal/policy"
 	"aiguardrails/internal/promptfw"
 	"aiguardrails/internal/rag"
@@ -21,6 +23,7 @@ import (
 	"aiguardrails/internal/server"
 	"aiguardrails/internal/store"
 	"aiguardrails/internal/tenant"
+	"aiguardrails/internal/tracing"
 	"aiguardrails/internal/usage"
 )
 
@@ -90,7 +93,13 @@ func main() {
 		}
 	}
 
-	srv := server.New(cfg, tenantSvc, policyEng, firewall, agentGw, ragSec, usageMeter, rateLimiter, auditLog, auditStore, mcpBroker, capStore, rulesRepo, ruleStore, tenantRuleStore, userStore, tenantUserStore, jwtSigner, opaEval)
+	// Initialize additional stores for alerts, usage stats, tracing, and orgs
+	alertStore := alert.NewRuleStore(db)
+	usageStatStore := usage.NewUsageStore(db)
+	tracingStore := tracing.NewStore(db)
+	orgStore := org.NewStore(db)
+
+	srv := server.New(cfg, tenantSvc, policyEng, firewall, agentGw, ragSec, usageMeter, rateLimiter, auditLog, auditStore, mcpBroker, capStore, rulesRepo, ruleStore, tenantRuleStore, userStore, tenantUserStore, jwtSigner, opaEval, alertStore, usageStatStore, tracingStore, orgStore)
 	log.Printf("starting API on %s", srv.Addr())
 	if err := http.ListenAndServe(srv.Addr(), srv.Handler()); err != nil {
 		log.Fatal(err)

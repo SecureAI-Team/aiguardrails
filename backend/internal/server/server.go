@@ -64,7 +64,7 @@ type ctxKey string
 const authRoleCtxKey ctxKey = "role"
 
 // New builds a Server with dependencies.
-func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, firewall *promptfw.Firewall, agentGw *agent.Gateway, ragSec *rag.Security, usageMeter *usage.Meter, rateLimiter *usage.RateLimiter, auditLog *audit.Logger, auditStore *audit.Store, mcpBroker *mcp.Broker, capStore *mcp.Store, rulesRepo *policy.RulesRepository, ruleStore *policy.RuleStore, tenantRuleStore *policy.TenantRuleStore, userStore *auth.UserStore, tenantUserStore *auth.TenantUserStore, jwtSigner *auth.JWTSigner, opaEval *opa.Evaluator) *Server {
+func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, firewall *promptfw.Firewall, agentGw *agent.Gateway, ragSec *rag.Security, usageMeter *usage.Meter, rateLimiter *usage.RateLimiter, auditLog *audit.Logger, auditStore *audit.Store, mcpBroker *mcp.Broker, capStore *mcp.Store, rulesRepo *policy.RulesRepository, ruleStore *policy.RuleStore, tenantRuleStore *policy.TenantRuleStore, userStore *auth.UserStore, tenantUserStore *auth.TenantUserStore, jwtSigner *auth.JWTSigner, opaEval *opa.Evaluator, alertStore *alert.RuleStore, usageStore *usage.UsageStore, tracingStore *tracing.Store, orgStore *org.Store) *Server {
 	s := &Server{
 		cfg:             cfg,
 		router:          chi.NewRouter(),
@@ -86,6 +86,10 @@ func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, f
 		tenantUserStore: tenantUserStore,
 		jwtSigner:       jwtSigner,
 		opaEval:         opaEval,
+		alertStore:      alertStore,
+		usageStore:      usageStore,
+		tracingStore:    tracingStore,
+		orgStore:        orgStore,
 	}
 	s.routes()
 	return s
@@ -162,6 +166,31 @@ func (s *Server) routes() {
 			r.Post("/capabilities", s.createCapability)
 			r.Get("/audit", s.listAudit)
 			r.Get("/tenants/{tenantID}/policies/history", s.listPolicyHistory)
+
+			// User management routes
+			if s.userStore != nil {
+				s.registerUserRoutes(r)
+			}
+
+			// Alert routes
+			if s.alertStore != nil {
+				s.registerAlertRoutes(r)
+			}
+
+			// Usage/Stats routes
+			if s.usageStore != nil {
+				s.registerUsageRoutes(r)
+			}
+
+			// Tracing routes
+			if s.tracingStore != nil {
+				s.registerTracingRoutes(r)
+			}
+
+			// Organization routes
+			if s.orgStore != nil {
+				s.registerOrgRoutes(r)
+			}
 		})
 
 		// Admin via OIDC/JWT

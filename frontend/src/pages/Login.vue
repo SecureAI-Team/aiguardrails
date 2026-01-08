@@ -118,7 +118,7 @@ async function onPasswordLogin() {
   error.value = ''
   try {
     const res = await api.login(username.value, password.value)
-    localStorage.setItem('token', res.token)
+    localStorage.setItem('auth_token', res.token)
     localStorage.setItem('username', username.value)
     await router.push('/dashboard')
   } catch (e: any) {
@@ -150,7 +150,7 @@ async function onPhoneLogin() {
   error.value = ''
   try {
     const res = await client.post('/v1/auth/sms/verify', { phone: phone.value, code: code.value })
-    localStorage.setItem('token', res.data.token)
+    localStorage.setItem('auth_token', res.data.token)
     localStorage.setItem('username', phone.value)
     await router.push('/dashboard')
   } catch (e: any) {
