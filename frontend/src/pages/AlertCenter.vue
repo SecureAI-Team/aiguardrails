@@ -3,6 +3,7 @@
     <div class="page-header">
       <h2>🚨 告警中心</h2>
       <div class="header-actions">
+        <router-link to="/alerts/rules" class="btn-primary">⚡ 配置规则</router-link>
         <select v-model="filterSeverity" @change="loadAlerts">
           <option value="">全部等级</option>
           <option value="critical">严重</option>
@@ -132,7 +133,8 @@ async function acknowledge(id: string) {
 .page-header h2 { margin: 0; }
 .header-actions { display: flex; gap: 12px; }
 .header-actions select { padding: 8px 16px; border: 1px solid #e2e8f0; border-radius: 6px; }
-.btn-outline { padding: 8px 16px; border: 1px solid #e2e8f0; background: white; border-radius: 6px; cursor: pointer; }
+.btn-outline { padding: 8px 16px; border: 1px solid #e2e8f0; background: white; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; color: #334155; }
+.btn-primary { padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
 
 .stats-row { display: flex; gap: 16px; margin-bottom: 24px; }
 .stat-card { flex: 1; padding: 20px; border-radius: 12px; text-align: center; }

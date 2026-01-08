@@ -1,100 +1,135 @@
 <template>
-  <div>
-    <h2>Rule Library</h2>
-    <form @submit.prevent="load" class="filters">
-      <input v-model="jurisdiction" placeholder="Jurisdiction (e.g., EU)" />
-      <input v-model="regulation" placeholder="Regulation (e.g., GDPR)" />
-      <input v-model="vendor" placeholder="Vendor (e.g., Siemens)" />
-      <input v-model="product" placeholder="Product" />
-      <input v-model="tag" placeholder="Tag (e.g., pci, hipaa, siemens)" />
-      <select v-model="severity">
-        <option value="">Severity</option>
-        <option value="low">low</option>
-        <option value="medium">medium</option>
-        <option value="high">high</option>
-        <option value="critical">critical</option>
+  <div class="page-container">
+    <div class="page-header">
+      <h2>规则库</h2>
+    </div>
+
+    <div class="filter-bar">
+      <input v-model="filters.jurisdiction" placeholder="司法管辖区 (如 EU)" class="filter-input" />
+      <input v-model="filters.regulation" placeholder="法规 (如 GDPR)" class="filter-input" />
+      <input v-model="filters.tag" placeholder="标签" class="filter-input" />
+      <select v-model="filters.severity" class="filter-select">
+        <option value="">全部严重性</option>
+        <option value="low">低</option>
+        <option value="medium">中</option>
+        <option value="high">高</option>
+        <option value="critical">严重</option>
       </select>
-      <select v-model="decision">
-        <option value="">Decision</option>
-        <option value="block">block</option>
-        <option value="mark">mark</option>
-      </select>
-      <button :disabled="loading">Filter</button>
-    </form>
-    <div class="card" v-for="r in rules" :key="r.id">
-      <div><strong>{{ r.name }}</strong> ({{ r.regulation }} / {{ r.jurisdiction }})</div>
-      <div class="muted">Vendor: {{ r.vendor || 'N/A' }} | Product: {{ r.product || 'N/A' }}</div>
-      <div class="muted">Version: {{ r.version || 'n/a' }} | Decision: {{ r.decision || 'block' }}</div>
-      <div class="muted">Severity: {{ r.severity }} | Category: {{ r.category }}</div>
-      <div class="muted">Tags: {{ (r.tags || []).join(', ') }}</div>
-      <div>{{ r.description }}</div>
-      <div class="muted">Remediation: {{ r.remediation }}</div>
-      <div class="muted">Refs: {{ (r.references || []).join(', ') }}</div>
-      <div class="attach">
-        <input v-model="policyId" placeholder="Policy ID to attach" />
-        <button @click="attach(r.id)" :disabled="loading || !policyId">Attach</button>
-      </div>
+      <button @click="load" class="btn-primary" :disabled="loading">搜索</button>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>规则名称</th>
+            <th>法规/管辖区</th>
+            <th>厂商/产品</th>
+            <th>严重性</th>
+            <th>处置动作</th>
+            <th>描述</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="r in rules" :key="r.id">
+            <td class="font-bold">{{ r.name }}</td>
+            <td>
+              <div v-if="r.regulation || r.jurisdiction">
+                <span v-if="r.regulation" class="badge badge-info">{{ r.regulation }}</span>
+                <span v-if="r.jurisdiction" class="badge badge-warning">{{ r.jurisdiction }}</span>
+              </div>
+              <span v-else>-</span>
+            </td>
+            <td>
+              <div v-if="r.vendor">{{ r.vendor }} {{ r.product }}</div>
+              <span v-else>-</span>
+            </td>
+            <td>
+              <span :class="['badge', getSeverityClass(r.severity)]">{{ r.severity }}</span>
+            </td>
+            <td>
+              <span :class="['badge', r.decision === 'block' ? 'badge-danger' : 'badge-success']">{{ r.decision || 'block' }}</span>
+            </td>
+            <td class="desc-cell" :title="r.description">{{ r.description }}</td>
+          </tr>
+          <tr v-if="rules.length === 0">
+            <td colspan="6" class="empty-state">未找到匹配的规则</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { api } from '../services/api'
 
-const jurisdiction = ref('')
-const regulation = ref('')
-const vendor = ref('')
-const product = ref('')
-const tag = ref('')
-const severity = ref('')
-const decision = ref('')
-const policyId = ref('')
 const rules = ref<any[]>([])
 const loading = ref(false)
 
+const filters = reactive({
+  jurisdiction: '',
+  regulation: '',
+  vendor: '',
+  product: '',
+  tag: '',
+  severity: '',
+  decision: ''
+})
+
 async function load() {
   loading.value = true
-  rules.value = await api.listRules({
-    jurisdiction: jurisdiction.value,
-    regulation: regulation.value,
-    vendor: vendor.value,
-    product: product.value,
-    tag: tag.value,
-    severity: severity.value,
-    decision: decision.value
-  })
-  loading.value = false
+  try {
+    rules.value = await api.listRules(filters)
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
 }
 
-async function attach(ruleId: string) {
-  if (!policyId.value) return
-  loading.value = true
-  await api.attachRule(policyId.value, ruleId)
-  loading.value = false
+function getSeverityClass(severity: string) {
+  switch (severity) {
+    case 'critical': return 'badge-danger'
+    case 'high': return 'badge-danger'
+    case 'medium': return 'badge-warning'
+    case 'low': return 'badge-info'
+    default: return 'badge-secondary'
+  }
 }
 
 onMounted(load)
 </script>
 
 <style scoped>
-.muted {
-  color: #64748b;
-  font-size: 12px;
-}
-.card {
-  margin-bottom: 12px;
-}
-.attach {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-</style>
+.page-container { padding: 24px; }
+.page-header { margin-bottom: 24px; }
+.page-header h2 { margin: 0; font-size: 1.5rem; color: #1e293b; }
 
+.filter-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; background: white; padding: 16px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.filter-input, .filter-select { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; }
+.filter-input { width: 180px; }
+
+.table-container { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th, .data-table td { padding: 16px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+.data-table th { background: #f8fafc; font-weight: 600; color: #64748b; font-size: 0.875rem; }
+.data-table tr:hover { background: #f8fafc; }
+
+.font-bold { font-weight: 600; color: #1e293b; }
+.desc-cell { max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #64748b; }
+
+.badge { padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; margin-right: 4px; display: inline-block; }
+.badge-info { background: #e0f2fe; color: #075985; }
+.badge-warning { background: #fef9c3; color: #854d0e; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
+.badge-success { background: #dcfce7; color: #166534; }
+.badge-secondary { background: #f1f5f9; color: #64748b; }
+
+.btn-primary { background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:disabled { opacity: 0.7; }
+
+.empty-state { text-align: center; padding: 40px; color: #94a3b8; }
+</style>
