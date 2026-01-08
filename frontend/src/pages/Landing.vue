@@ -156,10 +156,10 @@
           <p>工业AI应用安全护栏平台</p>
         </div>
         <div class="footer-links">
-          <a href="#">文档</a>
-          <a href="#">API</a>
-          <a href="#">SDK</a>
-          <a href="#">联系我们</a>
+          <router-link to="/sdks">SDK</router-link>
+          <router-link to="/playground">API调试</router-link>
+          <router-link to="/models">模型</router-link>
+          <router-link to="/login">登录</router-link>
         </div>
       </div>
       <div class="footer-bottom">© 2026 AI GuardRails. All rights reserved.</div>

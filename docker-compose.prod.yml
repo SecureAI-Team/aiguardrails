@@ -102,6 +102,7 @@ services:
     depends_on:
       - api
     networks:
+      - internal
       - external
 
   nginx:
@@ -118,6 +119,7 @@ services:
       - ./deploy/nginx/ssl:/etc/nginx/ssl:ro
       - ./deploy/nginx/logs:/var/log/nginx
     networks:
+      - internal
       - external
 
 networks:
