@@ -1,29 +1,77 @@
 <template>
   <div id="app">
-    <header class="topbar">
-      <h1>AI Security Console</h1>
-      <nav>
-        <RouterLink to="/">Tenants</RouterLink>
-        <RouterLink to="/apps">Apps</RouterLink>
-        <RouterLink to="/policies">Policies</RouterLink>
-        <RouterLink to="/policy-history">Policy History</RouterLink>
-        <RouterLink to="/capabilities">Capabilities</RouterLink>
-        <RouterLink to="/rules">Rules</RouterLink>
-        <RouterLink to="/users">Users</RouterLink>
-        <RouterLink to="/logs">Logs</RouterLink>
-        <RouterLink to="/login">Login</RouterLink>
-      </nav>
-    </header>
-    <main class="content">
+    <!-- 公开页面：Landing/Login 不显示Console导航 -->
+    <template v-if="isPublicPage">
       <RouterView />
-    </main>
+    </template>
+    
+    <!-- 已登录：显示Console布局 -->
+    <template v-else>
+      <header class="topbar">
+        <h1>AI Security Console</h1>
+        <nav>
+          <RouterLink to="/dashboard">仪表板</RouterLink>
+          <RouterLink to="/tenants">租户</RouterLink>
+          <RouterLink to="/apps">应用</RouterLink>
+          <RouterLink to="/policies">策略</RouterLink>
+          <RouterLink to="/rules">规则</RouterLink>
+          <RouterLink to="/alerts">告警</RouterLink>
+          <RouterLink to="/stats">统计</RouterLink>
+          <RouterLink to="/apikeys">密钥</RouterLink>
+          <RouterLink to="/traces">追踪</RouterLink>
+          <RouterLink to="/users">用户</RouterLink>
+          <RouterLink to="/orgs">组织</RouterLink>
+          <RouterLink to="/logs">日志</RouterLink>
+        </nav>
+        <div class="user-menu">
+          <span v-if="username">{{ username }}</span>
+          <button @click="logout">退出</button>
+        </div>
+      </header>
+      <main class="content">
+        <RouterView />
+      </main>
+    </template>
   </div>
 </template>
+
+<script setup lang="ts">
+import { computed, ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
+const route = useRoute()
+const router = useRouter()
+const username = ref('')
+
+// 公开页面列表（不需要登录）
+const publicPages = ['/', '/landing', '/login', '/sdks', '/playground', '/models']
+
+const isPublicPage = computed(() => {
+  return publicPages.includes(route.path)
+})
+
+onMounted(() => {
+  const token = localStorage.getItem('token')
+  const user = localStorage.getItem('username')
+  if (user) username.value = user
+  
+  // 如果未登录且不是公开页面，跳转到登录
+  if (!token && !publicPages.includes(route.path)) {
+    router.push('/login')
+  }
+})
+
+function logout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('username')
+  router.push('/landing')
+}
+</script>
 
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
   background: #f6f8fb;
 }
 .topbar {
@@ -34,45 +82,58 @@ body {
   background: #0f172a;
   color: #fff;
 }
+.topbar h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  margin-right: 24px;
+}
+.topbar nav {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+}
 .topbar nav a {
-  color: #cbd5f5;
-  margin-right: 12px;
+  color: #94a3b8;
+  padding: 6px 12px;
   text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+.topbar nav a:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
 }
 .topbar nav a.router-link-active {
+  background: #3b82f6;
   color: #fff;
-  font-weight: bold;
+}
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.user-menu span {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+.user-menu button {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #475569;
+  color: #94a3b8;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.user-menu button:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #fff;
 }
 .content {
   padding: 20px;
-}
-.card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 16px;
-  margin-bottom: 12px;
-}
-form {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-input {
-  padding: 6px 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-}
-button {
-  padding: 6px 12px;
-  border: none;
-  background: #2563eb;
-  color: #fff;
-  border-radius: 4px;
-  cursor: pointer;
-}
-button:disabled {
-  background: #94a3b8;
+  min-height: calc(100vh - 60px);
 }
 </style>
+
 
