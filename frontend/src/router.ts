@@ -10,10 +10,15 @@ import Login from './pages/Login.vue'
 import Users from './pages/Users.vue'
 import TenantUsers from './pages/TenantUsers.vue'
 import Profile from './pages/Profile.vue'
+import Landing from './pages/Landing.vue'
+import Dashboard from './pages/Dashboard.vue'
 
 const routes = [
+  { path: '/', component: Landing },
+  { path: '/landing', component: Landing },
   { path: '/login', component: Login },
-  { path: '/', component: Tenants },
+  { path: '/dashboard', component: Dashboard },
+  { path: '/tenants', component: Tenants },
   { path: '/apps', component: Apps },
   { path: '/policies', component: Policies },
   { path: '/policy-history', component: PolicyHistory },

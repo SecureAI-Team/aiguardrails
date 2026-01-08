@@ -46,6 +46,8 @@ type Server struct {
 	tenantRuleStore *policy.TenantRuleStore
 	userStore       *auth.UserStore
 	tenantUserStore *auth.TenantUserStore
+	socialAuth      *auth.SocialAuthStore
+	smsStore        *auth.SMSStore
 	jwtSigner       *auth.JWTSigner
 	opaEval         *opa.Evaluator
 }
@@ -129,6 +131,10 @@ func (s *Server) routes() {
 		_, _ = w.Write([]byte("ok"))
 	})
 	r.Post("/v1/auth/login", s.login)
+	// Social auth routes (optional)
+	if s.socialAuth != nil {
+		r.Route("/v1", s.registerSocialAuthRoutes)
+	}
 
 	r.Route("/v1", func(r chi.Router) {
 		// Admin-scoped endpoints (platform admin via token or local login)

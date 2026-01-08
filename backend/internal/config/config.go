@@ -41,6 +41,8 @@ type Config struct {
 	OPARegoPath    string
 	OPADecision    string
 	OPATimeoutSec  int
+	// Social auth
+	SocialAuthCallbackURL string
 }
 
 // Default returns a minimal runnable configuration for local development.
