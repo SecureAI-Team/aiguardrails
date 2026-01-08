@@ -193,31 +193,33 @@ func (s *Server) routes() {
 			}
 		})
 
-		// Admin via OIDC/JWT
-		r.Group(func(r chi.Router) {
-			r.Use(auth.OIDCMiddleware(s.cfg.OidcJWKSURL, s.cfg.OIDCIssuer, s.cfg.OIDCAudience, "tenant_id", s.cfg.OIDCAdminRole, s.cfg.OIDCUserRole, s.cfg.OIDCTimeoutSec, s.cfg.OIDCCacheMin))
-			// role comes from token; enforce permission per route
-			r.With(rbac.RequirePerm(rbac.PermManageApps)).Post("/tenants/{tenantID}/apps", s.createApp)
-			r.With(rbac.RequirePerm(rbac.PermManageApps)).Get("/tenants/{tenantID}/apps", s.listApps)
-			r.With(rbac.RequirePerm(rbac.PermManageApps)).Post("/apps/{appID}/rotate", s.rotateApp)
-			r.With(rbac.RequirePerm(rbac.PermManageApps)).Post("/apps/{appID}/revoke", s.revokeApp)
-			r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Post("/tenants/{tenantID}/policies", s.createPolicy)
-			r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Put("/tenants/{tenantID}/policies/{policyID}", s.updatePolicy)
-			r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Get("/tenants/{tenantID}/policies", s.listPolicies)
-			r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Get("/tenants/{tenantID}/policies/history", s.listPolicyHistory)
-			r.With(rbac.RequirePerm(rbac.PermManageApps)).Post("/capabilities", s.createCapability)
-			r.With(rbac.RequirePerm(rbac.PermViewLogs)).Get("/audit", s.listAudit)
-			if s.rulesRepo != nil && s.ruleStore != nil {
-				s.registerRulesRoutes(r)
-			}
-			if s.tenantRuleStore != nil {
-				s.registerTenantRulesRoutes(r)
-			}
-			// User management routes
-			if s.userStore != nil {
-				s.registerUserRoutes(r)
-			}
-		})
+		// Admin via OIDC/JWT (optional, only if OIDC is configured)
+		if s.cfg.OidcJWKSURL != "" {
+			r.Group(func(r chi.Router) {
+				r.Use(auth.OIDCMiddleware(s.cfg.OidcJWKSURL, s.cfg.OIDCIssuer, s.cfg.OIDCAudience, "tenant_id", s.cfg.OIDCAdminRole, s.cfg.OIDCUserRole, s.cfg.OIDCTimeoutSec, s.cfg.OIDCCacheMin))
+				// role comes from token; enforce permission per route
+				r.With(rbac.RequirePerm(rbac.PermManageApps)).Post("/tenants/{tenantID}/apps", s.createApp)
+				r.With(rbac.RequirePerm(rbac.PermManageApps)).Get("/tenants/{tenantID}/apps", s.listApps)
+				r.With(rbac.RequirePerm(rbac.PermManageApps)).Post("/apps/{appID}/rotate", s.rotateApp)
+				r.With(rbac.RequirePerm(rbac.PermManageApps)).Post("/apps/{appID}/revoke", s.revokeApp)
+				r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Post("/tenants/{tenantID}/policies", s.createPolicy)
+				r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Put("/tenants/{tenantID}/policies/{policyID}", s.updatePolicy)
+				r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Get("/tenants/{tenantID}/policies", s.listPolicies)
+				r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Get("/tenants/{tenantID}/policies/history", s.listPolicyHistory)
+				r.With(rbac.RequirePerm(rbac.PermManageApps)).Post("/capabilities", s.createCapability)
+				r.With(rbac.RequirePerm(rbac.PermViewLogs)).Get("/audit", s.listAudit)
+				if s.rulesRepo != nil && s.ruleStore != nil {
+					s.registerRulesRoutes(r)
+				}
+				if s.tenantRuleStore != nil {
+					s.registerTenantRulesRoutes(r)
+				}
+				// User management routes
+				if s.userStore != nil {
+					s.registerUserRoutes(r)
+				}
+			})
+		}
 
 		// App-scoped endpoints require app credentials.
 		r.Group(func(r chi.Router) {
