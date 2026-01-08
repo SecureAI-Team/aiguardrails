@@ -15,6 +15,13 @@ import Dashboard from './pages/Dashboard.vue'
 import Settings from './pages/Settings.vue'
 import AlertRules from './pages/AlertRules.vue'
 import AlertCenter from './pages/AlertCenter.vue'
+import Stats from './pages/Stats.vue'
+import ApiKeys from './pages/ApiKeys.vue'
+import Traces from './pages/Traces.vue'
+import SDKs from './pages/SDKs.vue'
+import Playground from './pages/Playground.vue'
+import Models from './pages/Models.vue'
+import Organizations from './pages/Organizations.vue'
 
 const routes = [
   { path: '/', component: Landing },
@@ -33,7 +40,14 @@ const routes = [
   { path: '/profile', component: Profile },
   { path: '/settings', component: Settings },
   { path: '/alerts', component: AlertCenter },
-  { path: '/alerts/rules', component: AlertRules }
+  { path: '/alerts/rules', component: AlertRules },
+  { path: '/stats', component: Stats },
+  { path: '/apikeys', component: ApiKeys },
+  { path: '/traces', component: Traces },
+  { path: '/sdks', component: SDKs },
+  { path: '/playground', component: Playground },
+  { path: '/models', component: Models },
+  { path: '/orgs', component: Organizations }
 ]
 
 const router = createRouter({

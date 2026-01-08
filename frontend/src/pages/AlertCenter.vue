@@ -103,7 +103,7 @@ function severityIcon(sev: string) {
   return icons[sev] || '⚪'
 }
 
-function formatTime(ts: string) {
+function formatTime(ts: string | undefined): string {
   if (!ts) return ''
   const d = new Date(ts)
   const now = new Date()

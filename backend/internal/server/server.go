@@ -18,11 +18,13 @@ import (
 	"aiguardrails/internal/config"
 	"aiguardrails/internal/mcp"
 	"aiguardrails/internal/opa"
+	"aiguardrails/internal/org"
 	"aiguardrails/internal/policy"
 	"aiguardrails/internal/promptfw"
 	"aiguardrails/internal/rag"
 	"aiguardrails/internal/rbac"
 	"aiguardrails/internal/tenant"
+	"aiguardrails/internal/tracing"
 	"aiguardrails/internal/types"
 	"aiguardrails/internal/usage"
 )
@@ -52,6 +54,9 @@ type Server struct {
 	jwtSigner       *auth.JWTSigner
 	opaEval         *opa.Evaluator
 	alertStore      *alert.RuleStore
+	usageStore      *usage.UsageStore
+	tracingStore    *tracing.Store
+	orgStore        *org.Store
 }
 
 type ctxKey string
