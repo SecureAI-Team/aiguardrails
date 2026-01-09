@@ -53,10 +53,10 @@ import Guides from '../components/docs/Guides.vue'
 const currentSection = ref('intro')
 
 const sections = {
-  intro: { title: '产品简介', component: shallowRef(Intro) },
-  gettingStarted: { title: '快速开始', component: shallowRef(GettingStarted) },
-  concepts: { title: '核心概念', component: shallowRef(Concepts) },
-  guides: { title: '开发指南', component: shallowRef(Guides) }
+  intro: { title: '产品简介', component: Intro },
+  gettingStarted: { title: '快速开始', component: GettingStarted },
+  concepts: { title: '核心概念', component: Concepts },
+  guides: { title: '开发指南', component: Guides }
 }
 </script>
 
