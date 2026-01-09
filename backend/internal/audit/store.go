@@ -2,6 +2,7 @@ package audit
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 	"strings"
 	"strconv"
@@ -28,7 +29,11 @@ func (s *Store) Init() error {
 
 // Record saves an event.
 func (s *Store) Record(event string, fields map[string]string) error {
-	_, err := s.db.Exec(`INSERT INTO audit_events (event, fields) VALUES ($1, $2)`, event, fields)
+	b, err := json.Marshal(fields)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec(`INSERT INTO audit_events (event, fields) VALUES ($1, $2)`, event, string(b))
 	return err
 }
 
@@ -59,11 +64,17 @@ func (s *Store) List(limit int, eventLike, tenant string) ([]map[string]any, err
 	var out []map[string]any
 	for rows.Next() {
 		var event string
-		var fields map[string]any
+		var fieldsJSON []byte
 		var ts time.Time
-		if err := rows.Scan(&event, &fields, &ts); err != nil {
+		if err := rows.Scan(&event, &fieldsJSON, &ts); err != nil {
 			return nil, err
 		}
+		var fields map[string]any
+		if err := json.Unmarshal(fieldsJSON, &fields); err != nil {
+			// fallback/ignore error?
+			fields = map[string]any{}
+		}
+
 		fields["event"] = event
 		fields["created_at"] = ts
 		out = append(out, fields)
