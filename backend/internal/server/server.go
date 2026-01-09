@@ -194,7 +194,8 @@ func (s *Server) routes() {
 		})
 
 		// Admin via OIDC/JWT (optional, only if OIDC is configured)
-		if s.cfg.OidcJWKSURL != "" {
+		// FIXME: OIDC routes currently override admin/password routes. Disabled until merged.
+		if false && s.cfg.OidcJWKSURL != "" {
 			r.Group(func(r chi.Router) {
 				r.Use(auth.OIDCMiddleware(s.cfg.OidcJWKSURL, s.cfg.OIDCIssuer, s.cfg.OIDCAudience, "tenant_id", s.cfg.OIDCAdminRole, s.cfg.OIDCUserRole, s.cfg.OIDCTimeoutSec, s.cfg.OIDCCacheMin))
 				// role comes from token; enforce permission per route
