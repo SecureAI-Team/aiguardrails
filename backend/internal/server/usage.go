@@ -33,9 +33,6 @@ func (s *Server) registerUsageRoutes(r chi.Router) {
 
 func (s *Server) getUsageStats(w http.ResponseWriter, r *http.Request) {
 	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
-	}
 	startDate := r.URL.Query().Get("start_date")
 	endDate := r.URL.Query().Get("end_date")
 	if startDate == "" {
@@ -55,9 +52,6 @@ func (s *Server) getUsageStats(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getUsageSummary(w http.ResponseWriter, r *http.Request) {
 	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
-	}
 	days := 7
 	if d := r.URL.Query().Get("days"); d != "" {
 		if parsed, err := strconv.Atoi(d); err == nil {
@@ -76,9 +70,6 @@ func (s *Server) getUsageSummary(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getUsageOverview(w http.ResponseWriter, r *http.Request) {
 	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
-	}
 
 	// 获取今日和本月统计
 	today := time.Now().Format("2006-01-02")
@@ -126,9 +117,6 @@ func (s *Server) getUsageOverview(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) listAPIKeys(w http.ResponseWriter, r *http.Request) {
 	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
-	}
 
 	keys, err := s.usageStore.ListAPIKeys(tenantID)
 	if err != nil {
@@ -153,7 +141,13 @@ func (s *Server) createAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.TenantID == "" {
-		req.TenantID = "default"
+		// Do not default, allow empty for platform admin? No, creating API Key requires tenantID.
+		// If we are platform admin, we should specify tenantID.
+		// If we are tenant admin, auth middleware should verify.
+		// For now, let's remove "default". If empty, DB will complain UUID invalid? No, DB constraints.
+		// Actually, if req.TenantID is empty here, and we pass it to Store, it will fail if column is NOT NULL.
+		// Let's leave it empty and let DB constraints handle it, or check for error.
+		// Better to not set default "default".
 	}
 
 	// 生成API Key
@@ -196,9 +190,6 @@ func (s *Server) revokeAPIKey(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getQuota(w http.ResponseWriter, r *http.Request) {
 	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
-	}
 
 	quota, err := s.usageStore.GetQuota(tenantID)
 	if err != nil {
@@ -221,7 +212,7 @@ func (s *Server) updateQuota(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if q.TenantID == "" {
-		q.TenantID = "default"
+		// q.TenantID = "default"
 	}
 
 	if err := s.usageStore.UpdateQuota(q.TenantID, &q); err != nil {

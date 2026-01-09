@@ -111,12 +111,20 @@ func (s *UsageStore) GetStats(tenantID string, appID *string, startDate, endDate
 	query := `SELECT id, tenant_id, app_id, date, hour, request_count, success_count, error_count, blocked_count,
 		CASE WHEN request_count > 0 THEN latency_sum / request_count ELSE 0 END as latency_avg,
 		latency_p50, latency_p99, input_tokens, output_tokens, created_at
-		FROM api_usage_stats WHERE tenant_id = $1 AND date >= $2 AND date <= $3`
-	args := []interface{}{tenantID, startDate, endDate}
+		FROM api_usage_stats WHERE date >= $1 AND date <= $2`
+	args := []interface{}{startDate, endDate}
+	argIdx := 3
+
+	if tenantID != "" {
+		query += ` AND tenant_id = $` + string(rune('0'+argIdx))
+		args = append(args, tenantID)
+		argIdx++
+	}
 
 	if appID != nil {
-		query += " AND app_id = $4"
+		query += ` AND app_id = $` + string(rune('0'+argIdx))
 		args = append(args, *appID)
+		argIdx++
 	}
 	query += " ORDER BY date DESC, hour DESC"
 
@@ -143,12 +151,22 @@ func (s *UsageStore) GetStats(tenantID string, appID *string, startDate, endDate
 // GetDailySummary 获取日汇总
 func (s *UsageStore) GetDailySummary(tenantID string, days int) ([]map[string]interface{}, error) {
 	startDate := time.Now().AddDate(0, 0, -days).Format("2006-01-02")
-	rows, err := s.db.Query(`
-		SELECT date, SUM(request_count) as requests, SUM(success_count) as success,
+	query := `SELECT date, SUM(request_count) as requests, SUM(success_count) as success,
 			SUM(error_count) as errors, SUM(blocked_count) as blocked,
 			SUM(input_tokens) as input_tokens, SUM(output_tokens) as output_tokens
-		FROM api_usage_stats WHERE tenant_id = $1 AND date >= $2
-		GROUP BY date ORDER BY date DESC`, tenantID, startDate)
+		FROM api_usage_stats WHERE date >= $1`
+	args := []interface{}{startDate}
+	argIdx := 2
+
+	if tenantID != "" {
+		query += ` AND tenant_id = $` + string(rune('0'+argIdx))
+		args = append(args, tenantID)
+		argIdx++
+	}
+
+	query += ` GROUP BY date ORDER BY date DESC`
+
+	rows, err := s.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
