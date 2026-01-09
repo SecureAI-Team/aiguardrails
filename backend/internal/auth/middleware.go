@@ -40,12 +40,6 @@ func APIKeyMiddleware(svc tenant.Service) func(http.Handler) http.Handler {
 				return
 			}
 			if !strings.EqualFold(app.APISecret, secret) {
-				println("APIKeyAuth Failed: Secret mismatch. AppID:", appID, "Expected len:", len(app.APISecret), "Got len:", len(secret))
-				// Safe debug: print first/last chars
-				if len(app.APISecret) > 4 && len(secret) > 4 {
-					println("Debug: Expected starts/ends:", app.APISecret[:4], "...", app.APISecret[len(app.APISecret)-4:])
-					println("Debug: Got starts/ends:     ", secret[:4], "...", secret[len(secret)-4:])
-				}
 				http.Error(w, "invalid credentials (secret mismatch)", http.StatusUnauthorized)
 				return
 			}
