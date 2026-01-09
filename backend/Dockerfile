@@ -8,7 +8,9 @@ COPY . .
 RUN go build -o aiguardrails ./cmd/api
 
 FROM alpine:3.19
-RUN apk add --no-cache ca-certificates tzdata
+# Use Aliyun mirror for faster package downloads in China
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 RUN adduser -D -g '' appuser
 COPY --from=builder /app/aiguardrails /app/aiguardrails
@@ -17,5 +19,3 @@ ENV PORT=8080 TZ=Asia/Shanghai
 EXPOSE 8080
 USER appuser
 ENTRYPOINT ["/app/aiguardrails"]
-
-
