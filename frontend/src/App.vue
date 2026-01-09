@@ -51,7 +51,7 @@ const isPublicPage = computed(() => {
 })
 
 function checkAuth() {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('token') || localStorage.getItem('auth_token')
   const user = localStorage.getItem('username')
   if (user) username.value = user
   
