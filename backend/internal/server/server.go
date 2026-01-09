@@ -238,11 +238,40 @@ func (s *Server) routes() {
 			r.Use(auth.APIKeyMiddleware(s.tenant))
 			r.Use(rbac.WithRole(rbac.RoleTenantUser))
 			r.Post("/guardrails/prompt-check", s.checkPrompt)
+			r.Post("/guardrails/rag-check", s.checkRAG)
 			r.Post("/guardrails/output-filter", s.checkOutput)
 			r.Post("/agent/plan", s.planAndAct)
 			r.Get("/mcp/capabilities", s.listCapabilities)
 		})
 	})
+}
+
+func (s *Server) checkRAG(w http.ResponseWriter, r *http.Request) {
+	var req promptCheckRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	tenantID := req.TenantID
+	if tenantID == "" {
+		tenantID = auth.TenantIDFromContext(r.Context())
+	}
+	// OPA check for RAG
+	if s.opaEval != nil {
+		allow, data, err := s.opaEval.Decide(r.Context(), opa.Input{
+			TenantID: tenantID,
+			AppID:    auth.AppIDFromContext(r.Context()),
+			Mode:     "rag_check",
+			Prompt:   req.Prompt,
+		})
+		if err == nil && !allow {
+			s.writeJSON(w, http.StatusOK, types.GuardrailResult{Allowed: false, Reason: "opa_block_rag", Signals: []string{fmt.Sprint(data)}})
+			return
+		}
+	}
+	// Fallback to standard prompt check (keywords etc)
+	res := s.firewall.CheckPrompt(tenantID, req.Prompt)
+	s.writeJSON(w, http.StatusOK, res)
 }
 
 type tenantRequest struct {
