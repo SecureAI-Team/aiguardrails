@@ -4,11 +4,11 @@ import "time"
 
 // Capability represents a tool/capability entry.
 type Capability struct {
-	Name        string
-	Description string
-	Tags        []string
-	ID          string
-	CreatedAt   time.Time
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Tags        []string  `json:"tags"`
+	ID          string    `json:"id"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // Registry holds allowed capabilities.
@@ -39,4 +39,3 @@ func (r *Registry) List() []Capability {
 	}
 	return out
 }
-
