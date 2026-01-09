@@ -23,7 +23,7 @@ func WithRole(role string) func(http.Handler) http.Handler {
 func RequirePerm(perm string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			role, _ := r.Context().Value(roleKey).(string)
+			role := RoleFromContext(r.Context())
 			if !HasPermission(role, perm) {
 				http.Error(w, "forbidden", http.StatusForbidden)
 				return
