@@ -13,7 +13,10 @@
         <router-link to="/playground">API调试</router-link>
         <router-link to="/models">模型目录</router-link>
       </div>
-      <div class="nav-links">
+      <div class="nav-links" v-if="isLoggedIn">
+        <router-link to="/dashboard" class="btn-primary">进入控制台</router-link>
+      </div>
+      <div class="nav-links" v-else>
         <router-link to="/login" class="btn-outline">登录</router-link>
         <router-link to="/login" class="btn-primary">免费试用</router-link>
       </div>
@@ -58,11 +61,21 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+
+const isLoggedIn = ref(false)
+
 function alert(msg: string) {
   window.alert(msg)
 }
+
+onMounted(() => {
+  const token = localStorage.getItem('token') || localStorage.getItem('auth_token')
+  if (token) {
+    isLoggedIn.value = true
+  }
+})
 </script>
 
 <style scoped>
