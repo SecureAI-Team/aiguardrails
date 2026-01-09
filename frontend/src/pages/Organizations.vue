@@ -113,11 +113,81 @@
         </div>
       </div>
     </div>
+    <!-- Add Team Modal -->
+    <div v-if="showAddTeam" class="modal-overlay" @click.self="showAddTeam = false">
+      <div class="modal">
+        <h3>新建团队</h3>
+        <div class="form-group">
+          <label>团队名称</label>
+          <input v-model="teamForm.name" placeholder="Engineering" />
+        </div>
+        <div class="form-group">
+          <label>描述</label>
+          <textarea v-model="teamForm.description" placeholder="团队职责描述"></textarea>
+        </div>
+        <div class="form-group">
+          <label>默认角色</label>
+          <select v-model="teamForm.default_role">
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button @click="showAddTeam = false" class="btn-outline">取消</button>
+          <button @click="createTeam" class="btn-primary">创建</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Member Modal -->
+    <div v-if="showAddMember" class="modal-overlay" @click.self="showAddMember = false">
+      <div class="modal">
+        <h3>邀请成员</h3>
+        <div class="form-group">
+          <label>选择用户</label>
+          <select v-model="memberForm.user_id">
+            <option value="" disabled>请选择用户...</option>
+            <option v-for="u in availableUsers" :key="u.id" :value="u.id">{{ u.username }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>角色</label>
+          <select v-model="memberForm.role">
+            <option value="member">成员</option>
+            <option value="admin">管理员</option>
+            <option value="owner">所有者</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button @click="showAddMember = false" class="btn-outline">取消</button>
+          <button @click="addMember" class="btn-primary">邀请</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add IP Modal -->
+    <div v-if="showAddIP" class="modal-overlay" @click.self="showAddIP = false">
+      <div class="modal">
+        <h3>添加IP白名单</h3>
+        <div class="form-group">
+          <label>IP地址或CIDR</label>
+          <input v-model="ipForm.ip_address" placeholder="192.168.1.1 or 10.0.0.0/24" />
+        </div>
+        <div class="form-group">
+          <label>描述</label>
+          <input v-model="ipForm.description" placeholder="Office VPN" />
+        </div>
+        <div class="modal-actions">
+          <button @click="showAddIP = false" class="btn-outline">取消</button>
+          <button @click="addIP" class="btn-primary">添加</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { api } from '../services/api'
 
 interface Organization {
@@ -142,6 +212,16 @@ const showAddTeam = ref(false)
 const showAddMember = ref(false)
 const showAddIP = ref(false)
 
+const teamForm = ref({ name: '', description: '', default_role: 'member' })
+const memberForm = ref({ user_id: '', role: 'member' })
+const ipForm = ref({ ip_address: '', description: '' })
+const allUsers = ref<any[]>([])
+
+const availableUsers = computed(() => {
+  const existingIds = new Set(members.value.map(m => m.user_id))
+  return allUsers.value.filter(u => !existingIds.has(u.id))
+})
+
 onMounted(() => loadOrgs())
 
 watch(selectedOrg, (org) => {
@@ -149,6 +229,7 @@ watch(selectedOrg, (org) => {
     loadTeams(org.id)
     loadMembers(org.id)
     loadWhitelist(org.id)
+    loadUsers()
   }
 })
 
@@ -196,7 +277,50 @@ async function deleteIP(id: string) {
 }
 
 async function saveSSO() {
-  alert('SSO配置已保存(演示)')
+  if (!selectedOrg.value) return
+  alert('SSO配置功能需要企业版License')
+}
+
+async function loadUsers() {
+  try {
+    const res = await api.get('/users')
+    allUsers.value = Array.isArray(res) ? res : []
+  } catch { allUsers.value = [] }
+}
+
+async function createTeam() {
+  if (!selectedOrg.value) return
+  try {
+    await api.post(`/orgs/${selectedOrg.value.id}/teams`, teamForm.value)
+    showAddTeam.value = false
+    teamForm.value = { name: '', description: '', default_role: 'member' }
+    loadTeams(selectedOrg.value.id)
+  } catch (e) { alert('创建团队失败') }
+}
+
+async function addMember() {
+  if (!selectedOrg.value || !memberForm.value.user_id) return
+  try {
+    await api.post(`/orgs/${selectedOrg.value.id}/members`, memberForm.value)
+    showAddMember.value = false
+    memberForm.value = { user_id: '', role: 'member' }
+    loadMembers(selectedOrg.value.id)
+  } catch (e) { alert('添加成员失败') }
+}
+
+async function addIP() {
+  if (!selectedOrg.value || !ipForm.value.ip_address) return
+  try {
+    await api.post(`/orgs/${selectedOrg.value.id}/whitelist`, {
+      ...ipForm.value,
+      enabled: true,
+      scope_type: 'org', // redundant but safe
+      scope_id: selectedOrg.value.id
+    })
+    showAddIP.value = false
+    ipForm.value = { ip_address: '', description: '' }
+    loadWhitelist(selectedOrg.value.id)
+  } catch (e) { alert('添加IP失败') }
 }
 </script>
 
