@@ -111,6 +111,24 @@
         </form>
       </div>
     </div>
+    <!-- Confirm Modal -->
+    <ConfirmModal 
+      :is-open="showConfirmModal"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      :danger="confirmDanger"
+      @confirm="onConfirmAction"
+      @cancel="showConfirmModal = false"
+    />
+
+    <!-- Alert Modal -->
+    <AlertModal
+      :is-open="showAlertModal"
+      :title="alertTitle"
+      :message="alertMessage"
+      :type="alertType"
+      @close="showAlertModal = false"
+    />
   </div>
 </template>
 
@@ -118,6 +136,8 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '../services/api'
+import ConfirmModal from '../components/ConfirmModal.vue'
+import AlertModal from '../components/AlertModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -130,6 +150,18 @@ const showCreateModal = ref(false)
 const caps = ref<any[]>([])
 const availableRules = ref<any[]>([])
 
+// Modals State
+const showConfirmModal = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmDanger = ref(false)
+const pendingAction = ref<() => Promise<void> | void>(() => {})
+
+const showAlertModal = ref(false)
+const alertTitle = ref('')
+const alertMessage = ref('')
+const alertType = ref('info')
+
 const form = reactive({
   name: '',
   selectedRules: [] as string[],
@@ -137,6 +169,28 @@ const form = reactive({
   sensitiveTerms: '',
   selectedCaps: [] as string[]
 })
+
+function showAlert(msg: string, type = 'info', title = '提示') {
+  alertMessage.value = msg
+  alertType.value = type
+  alertTitle.value = title
+  showAlertModal.value = true
+}
+
+function showConfirm(title: string, msg: string, action: () => Promise<void> | void, danger = false) {
+  confirmTitle.value = title
+  confirmMessage.value = msg
+  pendingAction.value = action
+  confirmDanger.value = danger
+  showConfirmModal.value = true
+}
+
+async function onConfirmAction() {
+  showConfirmModal.value = false
+  if (pendingAction.value) {
+    await pendingAction.value()
+  }
+}
 
 async function loadTenants() {
   try {
@@ -241,20 +295,26 @@ async function onSubmit() {
     showCreateModal.value = false
     await loadPolicies()
   } catch (e: any) {
-    alert('操作失败: ' + (e.response?.data?.error || e.message))
+    showAlert('操作失败: ' + (e.response?.data?.error || e.message), 'error')
   } finally {
     loading.value = false
   }
 }
 
-async function deletePolicy(p: any) {
-  if (!confirm(`确定要删除策略 "${p.name}" 吗？此操作不可恢复。`)) return
-  try {
-    await api.deletePolicy(selectedTenantId.value, p.id)
-    await loadPolicies()
-  } catch (e: any) {
-    alert('删除失败: ' + (e.response?.data?.error || e.message))
-  }
+function deletePolicy(p: any) {
+  showConfirm(
+    '删除策略',
+    `确定要删除策略 "${p.name}" 吗？此操作不可恢复。`,
+    async () => {
+      try {
+        await api.deletePolicy(selectedTenantId.value, p.id)
+        await loadPolicies()
+      } catch (e: any) {
+        showAlert('删除失败: ' + (e.response?.data?.error || e.message), 'error')
+      }
+    },
+    true
+  )
 }
 
 function getSeverityClass(severity: string) {

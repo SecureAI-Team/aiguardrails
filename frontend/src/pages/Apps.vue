@@ -91,7 +91,7 @@
     <!-- Secret Display Modal (Created/Rotated) -->
     <div v-if="showSecretModal" class="modal-overlay">
       <div class="modal">
-        <h3 class="text-success">🎉 应用创建成功</h3>
+        <h3 class="text-success">🎉 {{ isRotate ? '密钥重置成功' : '应用创建成功' }}</h3>
         <p>请立即保存您的 API Key，因为它不会再次显示。</p>
         <div class="key-display">
           <div class="label">App ID</div>
@@ -107,13 +107,34 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirm Modal -->
+    <ConfirmModal 
+      :is-open="showConfirmModal"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      :danger="confirmDanger"
+      @confirm="onConfirmAction"
+      @cancel="showConfirmModal = false"
+    />
+
+    <!-- Alert Modal -->
+    <AlertModal
+      :is-open="showAlertModal"
+      :title="alertTitle"
+      :message="alertMessage"
+      :type="alertType"
+      @close="showAlertModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, reactive, watch } from 'vue'
+import { onMounted, ref, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '../services/api'
+import ConfirmModal from '../components/ConfirmModal.vue'
+import AlertModal from '../components/AlertModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -129,19 +150,54 @@ const showSecretModal = ref(false)
 const currentApp = ref<any>({})
 const currentKey = ref('')
 const copyText = ref('复制')
+const isRotate = ref(false)
 
+// Forms
 const form = reactive({
   name: '',
   quota: 1000
 })
 
+// Modals State
+const showConfirmModal = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmDanger = ref(false)
+const pendingAction = ref<() => Promise<void> | void>(() => {})
+
+const showAlertModal = ref(false)
+const alertTitle = ref('')
+const alertMessage = ref('')
+const alertType = ref('info')
+
+function showAlert(msg: string, type = 'info', title = '提示') {
+  alertMessage.value = msg
+  alertType.value = type
+  alertTitle.value = title
+  showAlertModal.value = true
+}
+
+function showConfirm(title: string, msg: string, action: () => Promise<void> | void, danger = false) {
+  confirmTitle.value = title
+  confirmMessage.value = msg
+  pendingAction.value = action
+  confirmDanger.value = danger
+  showConfirmModal.value = true
+}
+
+async function onConfirmAction() {
+  showConfirmModal.value = false
+  if (pendingAction.value) {
+    await pendingAction.value()
+  }
+}
+
 async function loadTenants() {
   try {
     const result = await api.listTenants()
     tenants.value = Array.isArray(result) ? result : []
-    // Auto select if query param exists
     const qTenant = route.query.tenantId as string
-    if (qTenant) {
+    if (qTenant && tenants.value.some(t => t.id === qTenant)) {
       selectedTenantId.value = qTenant
       loadApps()
     }
@@ -184,55 +240,54 @@ async function onCreate() {
     showCreateModal.value = false
     
     // Show Secret
-    currentApp.value = res.app || res // Adjust based on API response structure
+    currentApp.value = res.app || res 
     currentKey.value = res.api_key || 'N/A'
+    isRotate.value = false
     showSecretModal.value = true
     
     await loadApps()
   } catch (e) {
-    alert('创建失败')
+    showAlert('创建失败', 'error')
   } finally {
     loading.value = false
   }
 }
 
-async function onRotate(app: any) {
-  if (!confirm(`确定要重置应用 "${app.name}" 的密钥吗？旧密钥将立即失效。`)) return
-  try {
-    const res = await api.post(`/tenants/${selectedTenantId.value}/apps/${app.id}/rotate`, {}) // Assuming API wrapper needs adjustment or generic post
-    // api.ts doesn't have explicit rotateApp method defined as export? Wait, checking file...
-    // Yes, rotateApp is not in the viewed api.ts snippet, or I missed it.
-    // I added generic post/put methods. Let's try to add rotateApp to api.ts or use generic post.
-    
-    // Actually looking at previous list_file output, api.ts size is 4592.
-    // In step 1048 I saw createCapability but not rotateApp.
-    // Wait, in server.go:155 r.Post("/apps/{appID}/rotate", s.rotateApp)
-    // The route is /apps/{appID}/rotate (Admin scope) OR /tenants/{tenantID}/apps (create).
-    // Let's check route definitions again.
-    // Admin routes:
-    // r.Post("/apps/{appID}/rotate", s.rotateApp)
-    
-    // So URL is /v1/apps/{appID}/rotate
-    
-    // Using generic client.post
-    // Adjust logic to match API response
-    currentApp.value = app
-    currentKey.value = res.api_key
-    showSecretModal.value = true
-  } catch (e) {
-    alert('重置失败') // Likely permission or API error
-  }
+function onRotate(app: any) {
+  showConfirm(
+    '重置密钥',
+    `确定要重置应用 "${app.name}" 的密钥吗？旧密钥将立即失效。`,
+    async () => {
+      try {
+        // Fix: Use generic /apps/{id}/rotate endpoint
+        const res = await api.post(`/apps/${app.id}/rotate`, {}) 
+        currentApp.value = app
+        currentKey.value = res.api_key
+        isRotate.value = true
+        showSecretModal.value = true
+      } catch (e: any) {
+        showAlert('重置失败: ' + (e.response?.data?.error || e.message), 'error')
+      }
+    },
+    true
+  )
 }
 
-async function onRevoke(app: any) {
-  if (!confirm(`确定要吊销应用 "${app.name}" 吗？此操作不可逆。`)) return
-  try {
-    // URL: /apps/{appID}/revoke
-    await api.post(`/apps/${app.id}/revoke`, {})
-    await loadApps()
-  } catch (e: any) {
-    alert('吊销失败: ' + (e.response?.data?.error || e.message))
-  }
+function onRevoke(app: any) {
+  showConfirm(
+    '吊销应用',
+    `确定要吊销应用 "${app.name}" 吗？此操作不可逆。`,
+    async () => {
+      try {
+        await api.post(`/apps/${app.id}/revoke`, {})
+        await loadApps()
+        showAlert('应用已吊销', 'success')
+      } catch (e: any) {
+        showAlert('吊销失败: ' + (e.response?.data?.error || e.message), 'error')
+      }
+    },
+    true
+  )
 }
 
 function copyKey() {

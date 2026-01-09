@@ -64,23 +64,44 @@
         </form>
       </div>
     </div>
+    <!-- Alert Modal -->
+    <AlertModal
+      :is-open="showAlertModal"
+      :title="alertTitle"
+      :message="alertMessage"
+      :type="alertType"
+      @close="showAlertModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { api } from '../services/api'
+import AlertModal from '../components/AlertModal.vue'
 
 const caps = ref<any[]>([])
 const loading = ref(false)
 const filterTag = ref('')
 const showCreateModal = ref(false)
 
+const showAlertModal = ref(false)
+const alertTitle = ref('')
+const alertMessage = ref('')
+const alertType = ref('info')
+
 const form = reactive({
   name: '',
   description: '',
   tagsInput: ''
 })
+
+function showAlert(msg: string, type = 'info', title = '提示') {
+  alertMessage.value = msg
+  alertType.value = type
+  alertTitle.value = title
+  showAlertModal.value = true
+}
 
 async function load() {
   loading.value = true
@@ -114,7 +135,7 @@ async function onCreate() {
     showCreateModal.value = false
     await load()
   } catch (e) {
-    alert('创建失败')
+    showAlert('创建失败', 'error')
   } finally {
     loading.value = false
   }
@@ -129,6 +150,7 @@ onMounted(load)
 </script>
 
 <style scoped>
+/* ... existing styles ... */
 .page-container { padding: 24px; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 .page-header h2 { margin: 0; font-size: 1.5rem; color: #1e293b; }

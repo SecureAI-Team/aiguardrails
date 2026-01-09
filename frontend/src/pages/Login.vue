@@ -67,6 +67,12 @@
           </div>
         </div>
       </div>
+      <AlertModal 
+        :is-open="showAlertModal" 
+        :title="alertTitle"
+        :message="alertMessage" 
+        @close="showAlertModal = false" 
+      />
     </div>
   </div>
 </template>
@@ -75,11 +81,16 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../services/api'
+import AlertModal from '../components/AlertModal.vue'
 
 const router = useRouter()
 const isRegister = ref(false)
 const loading = ref(false)
 const error = ref('')
+
+const showAlertModal = ref(false)
+const alertMessage = ref('')
+const alertTitle = ref('提示')
 
 const form = reactive({
   username: '',
@@ -87,7 +98,8 @@ const form = reactive({
 })
 
 function alert(msg: string) {
-  window.alert(msg)
+  alertMessage.value = msg
+  showAlertModal.value = true
 }
 
 async function handleSubmit() {

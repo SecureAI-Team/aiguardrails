@@ -51,12 +51,21 @@
         </form>
       </div>
     </div>
+    <!-- Alert Modal -->
+    <AlertModal
+      :is-open="showAlertModal"
+      :title="alertTitle"
+      :message="alertMessage"
+      :type="alertType"
+      @close="showAlertModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, reactive } from 'vue'
 import { api } from '../services/api'
+import AlertModal from '../components/AlertModal.vue'
 
 const tenants = ref<any[]>([])
 const loading = ref(false)
@@ -64,6 +73,18 @@ const showCreateModal = ref(false)
 const form = reactive({
   name: ''
 })
+
+const showAlertModal = ref(false)
+const alertTitle = ref('')
+const alertMessage = ref('')
+const alertType = ref('info')
+
+function showAlert(msg: string, type = 'info', title = '提示') {
+  alertMessage.value = msg
+  alertType.value = type
+  alertTitle.value = title
+  showAlertModal.value = true
+}
 
 async function load() {
   try {
@@ -84,7 +105,7 @@ async function onCreate() {
     showCreateModal.value = false
     await load()
   } catch (e) {
-    alert('创建失败')
+    showAlert('创建失败', 'error')
   } finally {
     loading.value = false
   }
@@ -94,6 +115,7 @@ onMounted(load)
 </script>
 
 <style scoped>
+/* ... existing styles ... */
 .page-container {
   padding: 24px;
 }

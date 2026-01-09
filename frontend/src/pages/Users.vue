@@ -125,21 +125,96 @@
         </form>
       </div>
     </div>
+    <!-- Reset Password Modal -->
+    <div v-if="showReset" class="modal-overlay" @click.self="showReset = false">
+      <div class="modal">
+        <h3>重置密码</h3>
+        <p>为用户 <strong>{{ currentResetUser?.username }}</strong> 设置新密码</p>
+        <form @submit.prevent="doResetPwd">
+          <div class="form-group">
+            <label>新密码</label>
+            <input v-model="resetPassword" type="password" required placeholder="请输入新密码" />
+          </div>
+          <div class="modal-actions">
+            <button type="button" @click="showReset = false" class="btn-secondary">取消</button>
+            <button type="submit" class="btn-primary" :disabled="loading">确认重置</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <ConfirmModal 
+      :is-open="showConfirmModal"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      :danger="confirmDanger"
+      @confirm="onConfirmAction"
+      @cancel="showConfirmModal = false"
+    />
+
+    <!-- Alert Modal -->
+    <AlertModal
+      :is-open="showAlertModal"
+      :title="alertTitle"
+      :message="alertMessage"
+      :type="alertType"
+      @close="showAlertModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
 import { api } from '../services/api'
+import ConfirmModal from '../components/ConfirmModal.vue'
+import AlertModal from '../components/AlertModal.vue'
 
 const users = ref<any[]>([])
 const loading = ref(false)
 const filterRole = ref('')
 const showCreate = ref(false)
 const showEdit = ref(false)
+const showReset = ref(false)
+const currentResetUser = ref<any>(null)
+const resetPassword = ref('')
 
 const form = reactive({ username: '', password: '', email: '', display_name: '', role: 'tenant_user' })
 const editForm = reactive({ id: '', email: '', display_name: '', role: '', status: '' })
+
+// Modals State
+const showConfirmModal = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmDanger = ref(false)
+const pendingAction = ref<() => Promise<void> | void>(() => {})
+
+const showAlertModal = ref(false)
+const alertTitle = ref('')
+const alertMessage = ref('')
+const alertType = ref('info')
+
+function showAlert(msg: string, type = 'info', title = '提示') {
+  alertMessage.value = msg
+  alertType.value = type
+  alertTitle.value = title
+  showAlertModal.value = true
+}
+
+function showConfirm(title: string, msg: string, action: () => Promise<void> | void, danger = false) {
+  confirmTitle.value = title
+  confirmMessage.value = msg
+  pendingAction.value = action
+  confirmDanger.value = danger
+  showConfirmModal.value = true
+}
+
+async function onConfirmAction() {
+  showConfirmModal.value = false
+  if (pendingAction.value) {
+    await pendingAction.value()
+  }
+}
 
 async function loadUsers() {
   loading.value = true
@@ -172,7 +247,7 @@ async function createUser() {
     showCreate.value = false
     await loadUsers()
   } catch (e: any) {
-    alert('创建失败: ' + (e.response?.data?.error || e.message))
+    showAlert('创建失败: ' + (e.response?.data?.error || e.message), 'error')
   } finally {
     loading.value = false
   }
@@ -199,31 +274,43 @@ async function updateUser() {
     showEdit.value = false
     await loadUsers()
   } catch (e: any) {
-    alert('更新失败: ' + (e.response?.data?.error || e.message))
+    showAlert('更新失败: ' + (e.response?.data?.error || e.message), 'error')
   } finally {
     loading.value = false
   }
 }
 
-async function resetPwd(user: any) {
-  const pwd = prompt(`请输入用户 ${user.username} 的新密码:`)
-  if (!pwd) return
+function resetPwd(user: any) {
+  currentResetUser.value = user
+  resetPassword.value = ''
+  showReset.value = true
+}
+
+async function doResetPwd() {
+  if (!resetPassword.value) return
   try {
-    await api.post(`/users/${user.id}/password`, { new_password: pwd })
-    alert('密码已重置成功')
+    await api.post(`/users/${currentResetUser.value.id}/password`, { new_password: resetPassword.value })
+    showReset.value = false
+    showAlert('密码已重置成功', 'success')
   } catch (e: any) {
-    alert('重置失败')
+    showAlert('重置失败: ' + (e.response?.data?.error || e.message), 'error')
   }
 }
 
-async function deleteUser(user: any) {
-  if (!confirm(`确定要永久删除用户 "${user.username}" 吗？此操作不可恢复。`)) return
-  try {
-    await api.delete(`/users/${user.id}`)
-    await loadUsers()
-  } catch(e) {
-    alert('删除失败')
-  }
+function deleteUser(user: any) {
+  showConfirm(
+    '删除用户',
+    `确定要永久删除用户 "${user.username}" 吗？此操作不可恢复。`,
+    async () => {
+      try {
+        await api.delete(`/users/${user.id}`)
+        await loadUsers()
+      } catch(e) {
+        showAlert('删除失败', 'error')
+      }
+    },
+    true
+  )
 }
 
 function roleLabel(role: string) {
