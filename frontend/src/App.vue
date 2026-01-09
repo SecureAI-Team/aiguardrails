@@ -50,7 +50,7 @@ const isPublicPage = computed(() => {
   return publicPages.includes(route.path)
 })
 
-onMounted(() => {
+function checkAuth() {
   const token = localStorage.getItem('token')
   const user = localStorage.getItem('username')
   if (user) username.value = user
@@ -59,6 +59,14 @@ onMounted(() => {
   if (!token && !publicPages.includes(route.path)) {
     router.push('/login')
   }
+}
+
+watch(() => route.path, () => {
+  checkAuth()
+})
+
+onMounted(() => {
+  checkAuth()
 })
 
 function logout() {

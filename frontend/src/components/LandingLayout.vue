@@ -14,6 +14,7 @@
         <router-link to="/models">模型目录</router-link>
       </div>
       <div class="nav-links" v-if="isLoggedIn">
+        <span class="user-greeting">Hi, {{ username }}</span>
         <router-link to="/dashboard" class="btn-primary">进入控制台</router-link>
       </div>
       <div class="nav-links" v-else>
@@ -65,6 +66,7 @@
 import { ref, onMounted } from 'vue'
 
 const isLoggedIn = ref(false)
+const username = ref('')
 
 function alert(msg: string) {
   window.alert(msg)
@@ -72,8 +74,10 @@ function alert(msg: string) {
 
 onMounted(() => {
   const token = localStorage.getItem('token') || localStorage.getItem('auth_token')
+  const user = localStorage.getItem('username')
   if (token) {
     isLoggedIn.value = true
+    if (user) username.value = user
   }
 })
 </script>
@@ -126,6 +130,7 @@ onMounted(() => {
 .nav-links {
   display: flex;
   gap: 12px;
+  align-items: center;
 }
 
 .btn-outline {
@@ -153,6 +158,12 @@ onMounted(() => {
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+}
+
+.user-greeting {
+  color: #fff;
+  font-weight: 500;
+  margin-right: 12px;
 }
 
 /* Main Content */
