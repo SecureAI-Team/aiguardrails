@@ -92,7 +92,7 @@
               <label v-for="c in caps" :key="c.id || c.name" class="checkbox-label">
                 <input type="checkbox" :value="c.name" v-model="form.selectedCaps" />
                 <span>{{ c.name }}</span>
-                <span class="muted" v-if="c.tags.length">({{ c.tags.join(', ') }})</span>
+                <span class="muted" v-if="c.tags && c.tags.length">({{ c.tags.join(', ') }})</span>
               </label>
             </div>
             <div v-if="caps.length === 0" class="muted">暂无可用能力</div>

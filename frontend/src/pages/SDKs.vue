@@ -13,8 +13,8 @@
           <p>适用于Go 1.18+</p>
           <code>go get github.com/aiguardrails/go-sdk</code>
           <div class="sdk-links">
-            <a href="#" class="btn-primary">📥 下载</a>
-            <a href="#" class="btn-outline">📖 文档</a>
+            <a href="https://github.com/aiguardrails/go-sdk" target="_blank" class="btn-primary">📥 下载</a>
+            <a href="https://pkg.go.dev/github.com/aiguardrails/go-sdk" target="_blank" class="btn-outline">📖 文档</a>
           </div>
         </div>
 
@@ -24,8 +24,8 @@
           <p>适用于Python 3.8+</p>
           <code>pip install aiguardrails</code>
           <div class="sdk-links">
-            <a href="#" class="btn-primary">📥 下载</a>
-            <a href="#" class="btn-outline">📖 文档</a>
+            <a href="https://pypi.org/project/aiguardrails" target="_blank" class="btn-primary">📥 下载</a>
+            <a href="https://github.com/aiguardrails/python-sdk" target="_blank" class="btn-outline">📖 文档</a>
           </div>
         </div>
 
@@ -35,8 +35,8 @@
           <p>适用于Node.js 16+</p>
           <code>npm install @aiguardrails/sdk</code>
           <div class="sdk-links">
-            <a href="#" class="btn-primary">📥 下载</a>
-            <a href="#" class="btn-outline">📖 文档</a>
+            <a href="https://www.npmjs.com/package/@aiguardrails/sdk" target="_blank" class="btn-primary">📥 下载</a>
+            <a href="https://github.com/aiguardrails/node-sdk" target="_blank" class="btn-outline">📖 文档</a>
           </div>
         </div>
 
@@ -46,8 +46,8 @@
           <p>适用于Java 11+</p>
           <code>&lt;dependency&gt;aiguardrails-sdk&lt;/dependency&gt;</code>
           <div class="sdk-links">
-            <a href="#" class="btn-primary">📥 下载</a>
-            <a href="#" class="btn-outline">📖 文档</a>
+            <a href="https://github.com/aiguardrails/java-sdk" target="_blank" class="btn-primary">📥 下载</a>
+            <a href="https://github.com/aiguardrails/java-sdk" target="_blank" class="btn-outline">📖 文档</a>
           </div>
         </div>
       </div>

@@ -142,6 +142,7 @@ func (s *Server) routes() {
 		_, _ = w.Write([]byte("ok"))
 	})
 	r.Post("/v1/auth/login", s.login)
+	r.Post("/v1/auth/register", s.register)
 	// Social auth routes (optional)
 	if s.socialAuth != nil {
 		r.Route("/v1", s.registerSocialAuthRoutes)

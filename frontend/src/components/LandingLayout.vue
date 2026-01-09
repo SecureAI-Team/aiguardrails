@@ -43,20 +43,27 @@
         </div>
         <div class="footer-links">
           <h4>资源</h4>
-          <a href="#">帮助文档</a>
-          <a href="#">API参考</a>
-          <a href="#">最佳实践</a>
+          <a href="#" @click.prevent="alert('帮助文档建设中...')">帮助文档</a>
+          <a href="#" @click.prevent="alert('API参考建设中...')">API参考</a>
+          <a href="#" @click.prevent="alert('最佳实践案例建设中...')">最佳实践</a>
         </div>
         <div class="footer-links">
           <h4>公司</h4>
-          <a href="#">关于我们</a>
-          <a href="#">联系我们</a>
-          <a href="#">隐私政策</a>
+          <a href="#" @click.prevent="alert('关于我们页面建设中...')">关于我们</a>
+          <a href="#" @click.prevent="alert('请发送邮件至 contact@aiguardrails.com')">联系我们</a>
+          <a href="#" @click.prevent="alert('隐私政策页面建设中...')">隐私政策</a>
         </div>
       </div>
     </footer>
   </div>
 </template>
+
+
+<script setup lang="ts">
+function alert(msg: string) {
+  window.alert(msg)
+}
+</script>
 
 <style scoped>
 .landing-layout {
