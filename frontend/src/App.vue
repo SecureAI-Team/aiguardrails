@@ -71,6 +71,7 @@ onMounted(() => {
 
 function logout() {
   localStorage.removeItem('token')
+  localStorage.removeItem('auth_token')
   localStorage.removeItem('username')
   router.push('/landing')
 }
