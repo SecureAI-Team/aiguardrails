@@ -43,15 +43,15 @@
         </div>
         <div class="footer-links">
           <h4>资源</h4>
-          <a href="#" @click.prevent="alert('帮助文档建设中...')">帮助文档</a>
-          <a href="#" @click.prevent="alert('API参考建设中...')">API参考</a>
-          <a href="#" @click.prevent="alert('最佳实践案例建设中...')">最佳实践</a>
+          <router-link to="/docs">帮助文档</router-link>
+          <router-link to="/api-reference">API参考</router-link>
+          <router-link to="/best-practices">最佳实践</router-link>
         </div>
         <div class="footer-links">
           <h4>公司</h4>
-          <a href="#" @click.prevent="alert('关于我们页面建设中...')">关于我们</a>
-          <a href="#" @click.prevent="alert('请发送邮件至 contact@aiguardrails.com')">联系我们</a>
-          <a href="#" @click.prevent="alert('隐私政策页面建设中...')">隐私政策</a>
+          <router-link to="/about">关于我们</router-link>
+          <router-link to="/contact">联系我们</router-link>
+          <router-link to="/privacy">隐私政策</router-link>
         </div>
       </div>
     </footer>

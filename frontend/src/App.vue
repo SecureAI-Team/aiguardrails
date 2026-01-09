@@ -44,7 +44,7 @@ const router = useRouter()
 const username = ref('')
 
 // 公开页面列表（不需要登录）
-const publicPages = ['/', '/landing', '/login', '/sdks', '/playground', '/models']
+const publicPages = ['/', '/landing', '/login', '/sdks', '/playground', '/models', '/docs', '/api-reference', '/best-practices', '/about', '/contact', '/privacy']
 
 const isPublicPage = computed(() => {
   return publicPages.includes(route.path)

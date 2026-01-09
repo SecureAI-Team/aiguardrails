@@ -22,6 +22,12 @@ import SDKs from './pages/SDKs.vue'
 import Playground from './pages/Playground.vue'
 import Models from './pages/Models.vue'
 import Organizations from './pages/Organizations.vue'
+import Docs from './pages/Docs.vue'
+import APIReference from './pages/APIReference.vue'
+import BestPractices from './pages/BestPractices.vue'
+import About from './pages/About.vue'
+import Contact from './pages/Contact.vue'
+import Privacy from './pages/Privacy.vue'
 
 const routes = [
   { path: '/', component: Landing },
@@ -47,7 +53,13 @@ const routes = [
   { path: '/sdks', component: SDKs },
   { path: '/playground', component: Playground },
   { path: '/models', component: Models },
-  { path: '/orgs', component: Organizations }
+  { path: '/orgs', component: Organizations },
+  { path: '/docs', component: Docs },
+  { path: '/api-reference', component: APIReference },
+  { path: '/best-practices', component: BestPractices },
+  { path: '/about', component: About },
+  { path: '/contact', component: Contact },
+  { path: '/privacy', component: Privacy }
 ]
 
 const router = createRouter({
