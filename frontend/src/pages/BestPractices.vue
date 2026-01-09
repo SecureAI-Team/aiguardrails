@@ -11,21 +11,21 @@
           <div class="badge">安全</div>
           <h2>防止 Prompt Injection 的 5 个关键策略</h2>
           <p>深入分析提示词注入攻击原理，以及如何利用 AI GuardRails 的多层防护机制进行有效拦截。</p>
-          <a href="#" class="read-more">阅读全文 →</a>
+          <a href="#" @click.prevent="alert('文章内容正在撰写中...')" class="read-more">阅读全文 →</a>
         </article>
 
         <article class="article-card">
           <div class="badge badge-perf">性能</div>
           <h2>在 RAG 架构中优化 Guardrails 延迟</h2>
           <p>如何在不牺牲安全性的前提下，通过缓存、并行检测和策略优化，将延迟降低至毫秒级。</p>
-          <a href="#" class="read-more">阅读全文 →</a>
+          <a href="#" @click.prevent="alert('文章内容正在撰写中...')" class="read-more">阅读全文 →</a>
         </article>
 
         <article class="article-card">
           <div class="badge badge-comp">合规</div>
           <h2>处理 PII 数据：自动化脱敏的最佳实践</h2>
           <p>如何配置敏感数据识别规则，确保在数据发送给 LLM 之前完成自动脱敏，满足 GDPR/CCPA 要求。</p>
-          <a href="#" class="read-more">阅读全文 →</a>
+          <a href="#" @click.prevent="alert('文章内容正在撰写中...')" class="read-more">阅读全文 →</a>
         </article>
       </div>
     </div>
@@ -34,6 +34,10 @@
 
 <script setup lang="ts">
 import LandingLayout from '../components/LandingLayout.vue'
+
+function alert(msg: string) {
+  window.alert(msg)
+}
 </script>
 
 <style scoped>

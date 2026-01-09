@@ -9,22 +9,22 @@
           <div class="card">
             <h3>🚀 快速开始</h3>
             <p>了解如何集成 SDK 并发送第一个请求。</p>
-            <a href="#" class="link">查看指南 →</a>
+            <a href="#" @click.prevent="alert('快速指南正在编写中，请参考 SDK 文档')" class="link">查看指南 →</a>
           </div>
           <div class="card">
             <h3>🛡️ 核心概念</h3>
             <p>深入理解策略、规则、租户与应用架构。</p>
-            <a href="#" class="link">阅读更多 →</a>
+            <a href="#" @click.prevent="alert('核心概念文档即将上线')" class="link">阅读更多 →</a>
           </div>
           <div class="card">
             <h3>🔧 SDK 集成</h3>
             <p>Go, Python, Java, Node.js SDK 详细文档。</p>
-            <a href="/sdks" class="link">下载 SDK →</a>
+            <router-link to="/sdks" class="link">下载 SDK →</router-link>
           </div>
           <div class="card">
             <h3>❓ 常见问题</h3>
             <p>关于 API 配额、计费及部署的常见疑问。</p>
-            <a href="#" class="link">查看 FAQ →</a>
+            <a href="#" @click.prevent="alert('FAQ 页面建设中')" class="link">查看 FAQ →</a>
           </div>
         </div>
       </div>
@@ -34,6 +34,10 @@
 
 <script setup lang="ts">
 import LandingLayout from '../components/LandingLayout.vue'
+
+function alert(msg: string) {
+  window.alert(msg)
+}
 </script>
 
 <style scoped>

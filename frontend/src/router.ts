@@ -67,4 +67,18 @@ const router = createRouter({
   routes
 })
 
+const publicPages = ['/', '/landing', '/login', '/sdks', '/playground', '/models', '/docs', '/api-reference', '/best-practices', '/about', '/contact', '/privacy']
+
+router.beforeEach((to, from, next) => {
+  const publicPages = ['/', '/landing', '/login', '/sdks', '/playground', '/models', '/docs', '/api-reference', '/best-practices', '/about', '/contact', '/privacy']
+  const authRequired = !publicPages.includes(to.path)
+  const token = localStorage.getItem('token') || localStorage.getItem('auth_token')
+
+  if (authRequired && !token) {
+    return next('/login')
+  }
+
+  next()
+})
+
 export default router
