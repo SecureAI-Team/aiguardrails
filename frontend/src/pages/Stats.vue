@@ -16,7 +16,7 @@
       <div class="stat-card">
         <div class="stat-icon">📡</div>
         <div class="stat-content">
-          <span class="stat-value">{{ overview.today?.requests || stats.requests }}</span>
+          <span class="stat-value">{{ formatNumber(overview.today?.requests ?? 0) }}</span>
           <span class="stat-label">今日请求</span>
         </div>
       </div>
@@ -30,26 +30,26 @@
       <div class="stat-card warning">
         <div class="stat-icon">🛡️</div>
         <div class="stat-content">
-          <span class="stat-value">{{ overview.today?.blocked || stats.blocked }}</span>
+          <span class="stat-value">{{ formatNumber(overview.today?.blocked ?? 0) }}</span>
           <span class="stat-label">今日阻断</span>
         </div>
       </div>
       <div class="stat-card info">
         <div class="stat-icon">🪙</div>
         <div class="stat-content">
-          <span class="stat-value">{{ formatNumber(overview.today?.tokens || stats.tokens) }}</span>
+          <span class="stat-value">{{ formatNumber(overview.today?.tokens ?? 0) }}</span>
           <span class="stat-label">今日Token</span>
         </div>
       </div>
     </div>
 
-    <div class="quota-section" v-if="overview.quota_percent > 0 || stats.quotaPercent > 0">
+    <div class="quota-section" v-if="overview.quota_percent >= 0">
       <h3>配额使用</h3>
       <div class="quota-bar">
-        <div class="quota-fill" :style="{ width: Math.min(overview.quota_percent || stats.quotaPercent, 100) + '%' }"
-             :class="{ warning: (overview.quota_percent || stats.quotaPercent) > 80, danger: (overview.quota_percent || stats.quotaPercent) > 95 }"></div>
+        <div class="quota-fill" :style="{ width: Math.min(overview.quota_percent || 0, 100) + '%' }"
+             :class="{ warning: (overview.quota_percent || 0) > 80, danger: (overview.quota_percent || 0) > 95 }"></div>
       </div>
-      <span class="quota-text">{{ (overview.quota_percent || stats.quotaPercent).toFixed(1) }}% 已使用</span>
+      <span class="quota-text">{{ (overview.quota_percent || 0).toFixed(1) }}% 已使用</span>
     </div>
 
     <div class="chart-section">
@@ -77,11 +77,11 @@
       <h3>本月统计</h3>
       <div class="summary-grid">
         <div class="summary-item">
-          <span class="summary-value">{{ formatNumber(overview.month?.requests || stats.monthRequests) }}</span>
+          <span class="summary-value">{{ formatNumber(overview.month?.requests ?? 0) }}</span>
           <span class="summary-label">总请求数</span>
         </div>
         <div class="summary-item">
-          <span class="summary-value">{{ formatNumber(overview.month?.tokens || stats.monthTokens) }}</span>
+          <span class="summary-value">{{ formatNumber(overview.month?.tokens ?? 0) }}</span>
           <span class="summary-label">Token消耗</span>
         </div>
       </div>
@@ -107,27 +107,8 @@ const stats = ref({
   monthTokens: 2850000
 })
 
-// Generate mock daily data
-function generateMockData(days: number) {
-  const data = []
-  const now = new Date()
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(now)
-    date.setDate(date.getDate() - i)
-    data.push({
-      date: date.toISOString().split('T')[0],
-      success: Math.floor(Math.random() * 500 + 100),
-      errors: Math.floor(Math.random() * 20),
-      blocked: Math.floor(Math.random() * 30),
-      requests: Math.floor(Math.random() * 550 + 100)
-    })
-  }
-  return data
-}
-
 const chartData = computed(() => {
-  if (dailyData.value.length > 0) return dailyData.value
-  return generateMockData(timeRange.value)
+  return dailyData.value
 })
 
 onMounted(() => loadData())
@@ -155,8 +136,7 @@ const successRate = computed(() => {
   if (today && today.requests > 0) {
     return ((today.requests - (today.errors || 0)) / today.requests * 100).toFixed(1)
   }
-  // Fallback
-  return ((stats.value.requests - 10) / stats.value.requests * 100).toFixed(1)
+  return '100.0'
 })
 
 function formatNumber(n: number): string {
