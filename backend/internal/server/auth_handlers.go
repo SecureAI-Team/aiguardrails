@@ -32,7 +32,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return
 	}
-	token, err := s.jwtSigner.Sign(u.Username, u.Role, 24*time.Hour)
+	token, err := s.jwtSigner.Sign(u.Username, u.Role, "", 24*time.Hour)
 	if err != nil {
 		http.Error(w, "token error", http.StatusInternalServerError)
 		return
@@ -57,4 +57,3 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
-

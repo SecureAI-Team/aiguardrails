@@ -51,6 +51,9 @@ func TenantIDFromContext(ctx context.Context) string {
 	if v, ok := ctx.Value(tenantIDKey).(string); ok {
 		return v
 	}
+	if v, ok := ctx.Value("tenantID").(string); ok {
+		return v
+	}
 	return ""
 }
 
@@ -95,4 +98,3 @@ func UserFromContext(ctx context.Context) *User {
 	}
 	return nil
 }
-

@@ -53,7 +53,7 @@ func TestLoginSuccess(t *testing.T) {
 
 func TestAdminAuthMiddleware(t *testing.T) {
 	signer := &auth.JWTSigner{Secret: []byte("secret")}
-	token, _ := signer.Sign("admin@example.com", rbac.RolePlatformAdmin, time.Hour)
+	token, _ := signer.Sign("admin@example.com", rbac.RolePlatformAdmin, "", time.Hour)
 	s := &Server{cfg: config.Default(), jwtSigner: signer}
 	s.cfg.AdminToken = "adm"
 
@@ -80,7 +80,7 @@ func TestAdminAuthMiddleware(t *testing.T) {
 	}
 
 	// forbidden role
-	userToken, _ := signer.Sign("u", "tenant_user", time.Hour)
+	userToken, _ := signer.Sign("u", "tenant_user", "", time.Hour)
 	r3 := httptest.NewRequest(http.MethodGet, "/test", nil)
 	r3.Header.Set("Authorization", "Bearer "+userToken)
 	w3 := httptest.NewRecorder()
@@ -91,4 +91,3 @@ func TestAdminAuthMiddleware(t *testing.T) {
 		t.Fatalf("non-admin should be forbidden")
 	}
 }
-

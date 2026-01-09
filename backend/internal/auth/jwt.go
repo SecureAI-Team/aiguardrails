@@ -13,14 +13,16 @@ type JWTSigner struct {
 type Claims struct {
 	Username string `json:"username"`
 	Role     string `json:"role"`
+	TenantID string `json:"tenant_id,omitempty"`
 	jwt.RegisteredClaims
 }
 
-func (j *JWTSigner) Sign(username, role string, ttl time.Duration) (string, error) {
+func (j *JWTSigner) Sign(username, role, tenantID string, ttl time.Duration) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		Username: username,
 		Role:     role,
+		TenantID: tenantID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
@@ -42,4 +44,3 @@ func (j *JWTSigner) Parse(tokenStr string) (*Claims, error) {
 	}
 	return nil, jwt.ErrSignatureInvalid
 }
-

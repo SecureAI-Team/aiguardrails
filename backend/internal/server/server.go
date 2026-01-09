@@ -622,7 +622,8 @@ func (s *Server) adminAuth() func(http.Handler) http.Handler {
 				http.Error(w, "forbidden", http.StatusForbidden)
 				return
 			}
-			ctx := context.WithValue(r.Context(), authRoleCtxKey, claims.Role)
+			ctx := context.WithValue(r.Context(), "role", claims.Role)
+			ctx = context.WithValue(ctx, "tenantID", claims.TenantID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

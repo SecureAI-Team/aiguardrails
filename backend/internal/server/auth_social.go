@@ -114,7 +114,7 @@ func (s *Server) loginWeChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 生成token
-	token, err := s.jwtSigner.Sign(user.Username, user.Role, 24*time.Hour)
+	token, err := s.jwtSigner.Sign(user.Username, user.Role, "", 24*time.Hour)
 	if err != nil {
 		http.Error(w, "token generation failed", http.StatusInternalServerError)
 		return
@@ -176,7 +176,7 @@ func (s *Server) loginAlipay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 生成token
-	token, err := s.jwtSigner.Sign(user.Username, user.Role, 24*time.Hour)
+	token, err := s.jwtSigner.Sign(user.Username, user.Role, "", 24*time.Hour)
 	if err != nil {
 		http.Error(w, "token generation failed", http.StatusInternalServerError)
 		return
@@ -242,7 +242,7 @@ func (s *Server) verifySMSLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 生成token
-	token, err := s.jwtSigner.Sign(user.Username, user.Role, 24*time.Hour)
+	token, err := s.jwtSigner.Sign(user.Username, user.Role, "", 24*time.Hour)
 	if err != nil {
 		http.Error(w, "token generation failed", http.StatusInternalServerError)
 		return
