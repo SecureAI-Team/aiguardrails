@@ -32,16 +32,16 @@
             <td class="font-bold">{{ p.name }}</td>
             <td>
               <div class="tags">
-                <span v-for="r in (p.promptRules || [])" :key="r" class="badge badge-info">{{ r }}</span>
+                <span v-for="r in (p.prompt_rules || [])" :key="r" class="badge badge-info">{{ r }}</span>
               </div>
             </td>
             <td>
               <div class="tags">
-                <span v-for="n in (p.ragNamespaces || [])" :key="n" class="badge badge-warning">{{ n }}</span>
+                <span v-for="n in (p.rag_namespaces || [])" :key="n" class="badge badge-warning">{{ n }}</span>
               </div>
             </td>
-            <td>{{ (p.sensitiveTerms || []).length }} 个词条</td>
-            <td class="text-sm font-mono">{{ new Date().toLocaleDateString() }}</td>
+            <td>{{ (p.sensitive_terms || []).length }} 个词条</td>
+            <td class="text-sm font-mono">{{ p.last_modified_at ? new Date(p.last_modified_at).toLocaleDateString() : '-' }}</td>
             <td>
               <button @click="openEdit(p)" class="btn-xs btn-link">✏️ 编辑</button>
               <button @click="deletePolicy(p)" class="btn-xs btn-link text-danger">🗑️ 删除</button>
@@ -211,10 +211,10 @@ function openEdit(p: any) {
   isEdit.value = true
   currentPolicyId.value = p.id
   form.name = p.name
-  form.selectedRules = p.promptRules || []
-  form.ragNamespaces = (p.ragNamespaces || []).join(', ')
-  form.sensitiveTerms = (p.sensitiveTerms || []).join(', ')
-  form.selectedCaps = p.toolAllowList || []
+  form.selectedRules = p.prompt_rules || []
+  form.ragNamespaces = (p.rag_namespaces || []).join(', ')
+  form.sensitiveTerms = (p.sensitive_terms || []).join(', ')
+  form.selectedCaps = p.tool_allowlist || []
   showCreateModal.value = true
   if (caps.value.length === 0) loadCaps()
   if (availableRules.value.length === 0) loadRules()
