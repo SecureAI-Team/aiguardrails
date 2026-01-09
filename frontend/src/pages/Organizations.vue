@@ -218,8 +218,10 @@ const ipForm = ref({ ip_address: '', description: '' })
 const allUsers = ref<any[]>([])
 
 const availableUsers = computed(() => {
-  const existingIds = new Set(members.value.map(m => m.user_id))
-  return allUsers.value.filter(u => !existingIds.has(u.id))
+  const list = Array.isArray(members.value) ? members.value : []
+  const existingIds = new Set(list.map(m => m.user_id))
+  const users = Array.isArray(allUsers.value) ? allUsers.value : []
+  return users.filter(u => !existingIds.has(u.id))
 })
 
 onMounted(() => loadOrgs())
@@ -257,15 +259,24 @@ function selectOrg(org: Organization) {
 }
 
 async function loadTeams(orgId: string) {
-  try { teams.value = await api.get(`/orgs/${orgId}/teams`) } catch { teams.value = [] }
+  try {
+    const res = await api.get(`/orgs/${orgId}/teams`)
+    teams.value = Array.isArray(res) ? res : []
+  } catch { teams.value = [] }
 }
 
 async function loadMembers(orgId: string) {
-  try { members.value = await api.get(`/orgs/${orgId}/members`) } catch { members.value = [] }
+  try {
+    const res = await api.get(`/orgs/${orgId}/members`)
+    members.value = Array.isArray(res) ? res : []
+  } catch { members.value = [] }
 }
 
 async function loadWhitelist(orgId: string) {
-  try { whitelist.value = await api.get(`/orgs/${orgId}/whitelist`) } catch { whitelist.value = [] }
+  try {
+    const res = await api.get(`/orgs/${orgId}/whitelist`)
+    whitelist.value = Array.isArray(res) ? res : []
+  } catch { whitelist.value = [] }
 }
 
 async function deleteIP(id: string) {
