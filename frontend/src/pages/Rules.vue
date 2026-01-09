@@ -2,6 +2,9 @@
   <div class="page-container">
     <div class="page-header">
       <h2>规则库</h2>
+      <div class="alert-banner">
+        ⓘ 规则库为只读参考。请在 "配置策略" (Policies) 中引用这些规则。
+      </div>
     </div>
 
     <div class="filter-bar">
@@ -28,6 +31,7 @@
             <th>严重性</th>
             <th>处置动作</th>
             <th>描述</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
@@ -51,12 +55,29 @@
               <span :class="['badge', r.decision === 'block' ? 'badge-danger' : 'badge-success']">{{ r.decision || 'block' }}</span>
             </td>
             <td class="desc-cell" :title="r.description">{{ r.description }}</td>
+            <td>
+              <button @click="viewRule(r)" class="btn-xs">查看详情</button>
+            </td>
           </tr>
           <tr v-if="rules.length === 0">
             <td colspan="6" class="empty-state">未找到匹配的规则</td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+
+    <!-- Rule Detail Modal -->
+    <div v-if="selectedRule" class="modal-overlay" @click.self="selectedRule = null">
+      <div class="modal">
+        <h3>规则详情: {{ selectedRule.name }}</h3>
+        <div class="detail-content">
+          <pre>{{ JSON.stringify(selectedRule, null, 2) }}</pre>
+        </div>
+        <div class="modal-actions">
+          <button @click="selectedRule = null" class="btn-primary">关闭</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -67,6 +88,11 @@ import { api } from '../services/api'
 
 const rules = ref<any[]>([])
 const loading = ref(false)
+const selectedRule = ref<any>(null)
+
+function viewRule(r: any) {
+  selectedRule.value = r
+}
 
 const filters = reactive({
   jurisdiction: '',
@@ -134,4 +160,12 @@ onMounted(load)
 .btn-primary:disabled { opacity: 0.7; }
 
 .empty-state { text-align: center; padding: 40px; color: #94a3b8; }
+
+.alert-banner { background: #eff6ff; color: #1e40af; padding: 10px 16px; border-radius: 6px; font-size: 0.9rem; border: 1px solid #dbeafe; display: inline-block; margin-left: 20px; }
+.btn-xs { padding: 4px 10px; font-size: 0.8rem; background: white; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal { background: white; padding: 24px; border-radius: 12px; width: 600px; max-height: 80vh; display: flex; flex-direction: column; }
+.detail-content { background: #f8fafc; padding: 16px; border-radius: 8px; margin: 16px 0; overflow: auto; max-height: 400px; }
+.detail-content pre { margin: 0; font-family: monospace; font-size: 0.85rem; color: #334155; }
+.modal-actions { text-align: right; }
 </style>

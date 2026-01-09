@@ -81,9 +81,11 @@
           <div class="chart-box">
              <!-- Simple CSS Bar Chart -->
              <div class="bar-chart">
-               <div v-for="(v, i) in trafficData" :key="i" class="bar-col">
-                 <div class="bar-fill" :style="{ height: v + '%' }"></div>
-                 <span class="bar-label">{{ i * 2 }}:00</span>
+               <div v-if="chartData.length === 0" class="no-data">暂无流量数据</div>
+               <div v-for="d in chartData" :key="d.date" class="bar-col" :title="d.requests + ' Requests'">
+                 <!-- Use relative height based on max value -->
+                 <div class="bar-fill" :style="{ height: getBarHeight(d.requests) + '%' }"></div>
+                 <span class="bar-label">{{ formatDate(d.date) }}</span>
                </div>
              </div>
           </div>
@@ -148,7 +150,18 @@ const stats = ref({
 })
 
 const recentLogs = ref<any[]>([])
-const trafficData = ref<number[]>([10, 25, 15, 40, 35, 20, 45, 60, 50, 30, 25, 10])
+const chartData = ref<any[]>([])
+
+function getBarHeight(val: number) {
+  if (!chartData.value.length) return 0
+  const max = Math.max(...chartData.value.map(d => d.requests || 0)) || 1
+  return Math.max(5, (val / max) * 100) // min 5% height
+}
+
+function formatDate(ds: string) {
+  const d = new Date(ds)
+  return `${d.getMonth() + 1}/${d.getDate()}`
+}
 
 onMounted(async () => {
   loadUser()
@@ -170,14 +183,22 @@ function loadUser() {
 
 async function loadStats() {
   try {
-    // Parallel loading
-    const [tenantsResult, logsResult] = await Promise.all([
+    const [tenantsResult, logsResult, summaryRes] = await Promise.all([
       api.listTenants().catch(() => []),
-      api.listAudit(5).catch(() => [])
+      api.listAudit(5).catch(() => []),
+      api.get('/usage/summary?days=7').catch(() => [])
     ])
     
     const tenants = Array.isArray(tenantsResult) ? tenantsResult : []
     const logs = Array.isArray(logsResult) ? logsResult : []
+    const summary = Array.isArray(summaryRes) ? summaryRes : []
+
+    if (summary.length > 0) {
+      // Sort chronologically
+      chartData.value = summary.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    } else {
+      chartData.value = []
+    }
     
     stats.value.tenants = tenants.length
     
