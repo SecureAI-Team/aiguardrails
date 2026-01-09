@@ -10,7 +10,8 @@
         <h2>Authentication</h2>
         <p>所有请求需在 Header 中包含认证 Token。</p>
         <div class="code-block">
-          <code>Authorization: Bearer &lt;YOUR_API_TOKEN&gt;</code>
+          <code>X-App-Id: &lt;YOUR_APP_ID&gt;
+X-App-Secret: &lt;YOUR_API_SECRET&gt;</code>
         </div>
       </div>
 
@@ -39,6 +40,11 @@
               <td><span class="badge post">POST</span></td>
               <td>/guardrails/prompt-check</td>
               <td>检测 Prompt 安全性</td>
+            </tr>
+            <tr>
+              <td><span class="badge post">POST</span></td>
+              <td>/guardrails/rag-check</td>
+              <td>RAG 检索安全性检查</td>
             </tr>
             <tr>
               <td><span class="badge post">POST</span></td>
