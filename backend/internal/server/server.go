@@ -164,6 +164,7 @@ func (s *Server) routes() {
 			r.Get("/tenants/{tenantID}/policies", s.listPolicies)
 
 			r.Post("/capabilities", s.createCapability)
+			r.Get("/capabilities", s.listCapabilities)
 			r.Get("/audit", s.listAudit)
 			r.Get("/tenants/{tenantID}/policies/history", s.listPolicyHistory)
 

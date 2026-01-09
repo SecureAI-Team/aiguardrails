@@ -60,7 +60,7 @@ export const api = {
   },
   async listCapabilities(tag?: string) {
     const q = tag ? `?tag=${encodeURIComponent(tag)}` : ''
-    const res = await client.get(`/v1/mcp/capabilities${q}`)
+    const res = await client.get(`/v1/capabilities${q}`)
     return res.data
   },
   async createCapability(payload: { name: string; description: string; tags: string[] }) {
