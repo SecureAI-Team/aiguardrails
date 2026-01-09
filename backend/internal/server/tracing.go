@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -44,6 +45,7 @@ func (s *Server) listTraces(w http.ResponseWriter, r *http.Request) {
 
 	traces, err := s.tracingStore.ListTraces(tenantID, blocked, nil, limit)
 	if err != nil {
+		log.Printf("listTraces error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

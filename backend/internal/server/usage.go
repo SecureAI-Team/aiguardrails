@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -66,6 +67,7 @@ func (s *Server) getUsageSummary(w http.ResponseWriter, r *http.Request) {
 
 	summary, err := s.usageStore.GetDailySummary(tenantID, days)
 	if err != nil {
+		log.Printf("getUsageSummary error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
