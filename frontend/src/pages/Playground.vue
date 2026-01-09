@@ -19,8 +19,12 @@
             </select>
           </div>
           <div class="form-group">
-            <label>API Key</label>
-            <input v-model="apiKey" type="password" placeholder="sk_your_api_key" />
+            <label>App ID</label>
+            <input v-model="appId" type="text" placeholder="e.g. 550e8400-e29b-..." />
+          </div>
+          <div class="form-group">
+            <label>API Key (Secret)</label>
+            <input v-model="apiKey" type="password" placeholder="sk_..." />
           </div>
           <div class="form-group">
             <label>请求体 (JSON)</label>
@@ -78,6 +82,7 @@ import { ref, computed } from 'vue'
 import LandingLayout from '../components/LandingLayout.vue'
 
 const endpoint = ref('/v1/guardrails/prompt-check')
+const appId = ref('')
 const apiKey = ref('')
 const requestBody = ref('{\n  "prompt": "请帮我写一段Python代码"\n}')
 const response = ref<any>(null)
@@ -102,12 +107,19 @@ async function sendRequest() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey.value}`
+        'X-App-Id': appId.value,
+        'X-App-Secret': apiKey.value
       },
       body: requestBody.value
     })
     responseStatus.value = `${res.status} ${res.statusText}`
-    response.value = await res.json()
+    // Try to parse JSON, if fails fallback to text
+    const text = await res.text()
+    try {
+        response.value = JSON.parse(text)
+    } catch {
+        response.value = { error: text || 'Invalid Response' }
+    }
   } catch (e: any) {
     responseStatus.value = 'Error'
     response.value = { error: e.message }
