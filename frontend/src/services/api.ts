@@ -46,6 +46,14 @@ export const api = {
     const res = await client.post(`/v1/tenants/${tenantId}/policies`, payload)
     return res.data
   },
+  async updatePolicy(tenantId: string, policyId: string, payload: any) {
+    const res = await client.put(`/v1/tenants/${tenantId}/policies/${policyId}`, payload)
+    return res.data
+  },
+  async deletePolicy(tenantId: string, policyId: string) {
+    const res = await client.delete(`/v1/tenants/${tenantId}/policies/${policyId}`)
+    return res.data
+  },
   async listPolicyHistory(tenantId: string) {
     const res = await client.get(`/v1/tenants/${tenantId}/policies/history`)
     return res.data

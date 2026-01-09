@@ -1,10 +1,10 @@
 package policy
 
 import (
+	"errors"
 	"strings"
 	"sync"
 	"time"
-	"errors"
 
 	"github.com/google/uuid"
 
@@ -15,6 +15,7 @@ import (
 type Engine interface {
 	CreatePolicy(p types.Policy) (types.Policy, error)
 	UpdatePolicy(p types.Policy) (types.Policy, error)
+	DeletePolicy(tenantID, policyID string) error
 	ListPolicies(tenantID string) ([]types.Policy, error)
 	ListHistory(tenantID string, limit int) ([]types.Policy, error)
 	GetPolicy(tenantID, policyID string) (*types.Policy, error)
@@ -61,6 +62,20 @@ func (e *MemoryEngine) UpdatePolicy(p types.Policy) (types.Policy, error) {
 		}
 	}
 	return p, errors.New("policy not found")
+}
+
+// DeletePolicy removes a policy by ID.
+func (e *MemoryEngine) DeletePolicy(tenantID, policyID string) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	list := e.policies[tenantID]
+	for i, policy := range list {
+		if policy.ID == policyID {
+			e.policies[tenantID] = append(list[:i], list[i+1:]...)
+			return nil
+		}
+	}
+	return errors.New("policy not found")
 }
 
 // GetPolicy returns a policy by ID.
@@ -162,4 +177,3 @@ func (e *MemoryEngine) CustomTerms(tenantID string) []string {
 func (e *MemoryEngine) ListHistory(tenantID string, limit int) ([]types.Policy, error) {
 	return e.ListPolicies(tenantID)
 }
-

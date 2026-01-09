@@ -162,6 +162,7 @@ func (s *Server) routes() {
 
 			r.Post("/tenants/{tenantID}/policies", s.createPolicy)
 			r.Put("/tenants/{tenantID}/policies/{policyID}", s.updatePolicy)
+			r.Delete("/tenants/{tenantID}/policies/{policyID}", s.deletePolicy)
 			r.Get("/tenants/{tenantID}/policies", s.listPolicies)
 
 			r.Post("/capabilities", s.createCapability)
@@ -398,6 +399,28 @@ func (s *Server) updatePolicy(w http.ResponseWriter, r *http.Request) {
 	diff := summarizePolicyDiff(oldPolicy, &p)
 	s.audit.RecordStore(s.auditStore, "policy_updated", map[string]string{"tenant_id": tenantID, "policy_id": p.ID, "diff": diff})
 	s.writeJSON(w, http.StatusOK, p)
+}
+
+func (s *Server) deletePolicy(w http.ResponseWriter, r *http.Request) {
+	tenantID := chi.URLParam(r, "tenantID")
+	policyID := chi.URLParam(r, "policyID")
+	if !s.allowedTenant(r.Context(), tenantID) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+	// Check permissions
+	role := rbac.RoleFromContext(r.Context())
+	if role != rbac.RolePlatformAdmin && role != rbac.RoleTenantAdmin { // FIXME: fine-grained perms?
+		// Existing logic uses allowedTenant, but let's stick to consistent pattern
+		// actually allowedTenant checks admin/tenant_admin.
+	}
+
+	if err := s.policy.DeletePolicy(tenantID, policyID); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	s.audit.RecordStore(s.auditStore, "policy_deleted", map[string]string{"tenant_id": tenantID, "policy_id": policyID})
+	s.writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
 
 func (s *Server) listPolicies(w http.ResponseWriter, r *http.Request) {

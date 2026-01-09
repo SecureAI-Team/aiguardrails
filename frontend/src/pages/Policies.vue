@@ -24,6 +24,7 @@
             <th>RAG 命名空间</th>
             <th>敏感词库</th>
             <th>创建时间</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
@@ -40,10 +41,14 @@
               </div>
             </td>
             <td>{{ (p.sensitiveTerms || []).length }} 个词条</td>
-            <td class="text-sm font-mono">{{ new Date().toLocaleDateString() }}</td> <!-- API may not return created_at -->
+            <td class="text-sm font-mono">{{ new Date().toLocaleDateString() }}</td>
+            <td>
+              <button @click="openEdit(p)" class="btn-xs btn-link">✏️ 编辑</button>
+              <button @click="deletePolicy(p)" class="btn-xs btn-link text-danger">🗑️ 删除</button>
+            </td>
           </tr>
           <tr v-if="policies.length === 0">
-            <td colspan="5" class="empty-state">该租户下暂无策略</td>
+            <td colspan="6" class="empty-state">该租户下暂无策略</td>
           </tr>
         </tbody>
       </table>
@@ -58,8 +63,8 @@
     <!-- Create Modal -->
     <div v-if="showCreateModal" class="modal-overlay" @click.self="showCreateModal = false">
       <div class="modal">
-        <h3>新建策略</h3>
-        <form @submit.prevent="onCreate">
+        <h3>{{ isEdit ? '编辑策略' : '新建策略' }}</h3>
+        <form @submit.prevent="onSubmit">
           <div class="form-group">
             <label>策略名称</label>
             <input v-model="form.name" placeholder="请输入策略名称" required />
@@ -101,7 +106,7 @@
 
           <div class="modal-actions">
             <button type="button" @click="showCreateModal = false" class="btn-secondary">取消</button>
-            <button type="submit" class="btn-primary" :disabled="loading">创建</button>
+            <button type="submit" class="btn-primary" :disabled="loading">{{ isEdit ? '保存' : '创建' }}</button>
           </div>
         </form>
       </div>
@@ -186,7 +191,12 @@ function onTenantChange() {
   loadPolicies()
 }
 
+const isEdit = ref(false)
+const currentPolicyId = ref('')
+
 function openCreateModal() {
+  isEdit.value = false
+  currentPolicyId.value = ''
   form.name = ''
   form.selectedRules = []
   form.ragNamespaces = ''
@@ -197,23 +207,53 @@ function openCreateModal() {
   if (availableRules.value.length === 0) loadRules()
 }
 
-async function onCreate() {
+function openEdit(p: any) {
+  isEdit.value = true
+  currentPolicyId.value = p.id
+  form.name = p.name
+  form.selectedRules = p.promptRules || []
+  form.ragNamespaces = (p.ragNamespaces || []).join(', ')
+  form.sensitiveTerms = (p.sensitiveTerms || []).join(', ')
+  form.selectedCaps = p.toolAllowList || []
+  showCreateModal.value = true
+  if (caps.value.length === 0) loadCaps()
+  if (availableRules.value.length === 0) loadRules()
+}
+
+async function onSubmit() {
   if (!form.name) return
   loading.value = true
   try {
-    await api.createPolicy(selectedTenantId.value, {
+    const payload = {
       name: form.name,
       prompt_rules: form.selectedRules,
       rag_namespaces: form.ragNamespaces.split(',').map(s => s.trim()).filter(Boolean),
       sensitive_terms: form.sensitiveTerms.split(',').map(s => s.trim()).filter(Boolean),
       tool_allowlist: form.selectedCaps
-    })
+    }
+
+    if (isEdit.value) {
+      await api.updatePolicy(selectedTenantId.value, currentPolicyId.value, payload)
+    } else {
+      await api.createPolicy(selectedTenantId.value, payload)
+    }
+    
     showCreateModal.value = false
     await loadPolicies()
   } catch (e: any) {
-    alert('创建失败: ' + (e.response?.data?.error || e.message))
+    alert('操作失败: ' + (e.response?.data?.error || e.message))
   } finally {
     loading.value = false
+  }
+}
+
+async function deletePolicy(p: any) {
+  if (!confirm(`确定要删除策略 "${p.name}" 吗？此操作不可恢复。`)) return
+  try {
+    await api.deletePolicy(selectedTenantId.value, p.id)
+    await loadPolicies()
+  } catch (e: any) {
+    alert('删除失败: ' + (e.response?.data?.error || e.message))
   }
 }
 
@@ -266,7 +306,8 @@ onMounted(() => {
 .btn-primary { background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
 .btn-secondary { background: white; border: 1px solid #cbd5e1; color: #475569; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
 .btn-xs { padding: 2px 6px; font-size: 0.75rem; }
-.btn-link { background: none; border: none; color: #2563eb; cursor: pointer; text-decoration: underline; }
+.btn-link { background: none; border: none; color: #2563eb; cursor: pointer; text-decoration: underline; margin-right: 8px; }
+.text-danger { color: #dc2626; }
 
 .empty-state { text-align: center; padding: 40px; color: #94a3b8; }
 .empty-state-large { text-align: center; padding: 80px 0; color: #64748b; }
