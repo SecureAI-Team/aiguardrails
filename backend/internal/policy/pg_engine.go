@@ -67,6 +67,19 @@ func (e *PGEngine) insert(p types.Policy) error {
 	return err
 }
 
+// DeletePolicy removes a policy by ID.
+func (e *PGEngine) DeletePolicy(tenantID, policyID string) error {
+	res, err := e.db.Exec(`DELETE FROM policies WHERE id=$1 AND tenant_id=$2`, policyID, tenantID)
+	if err != nil {
+		return err
+	}
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return errors.New("policy not found")
+	}
+	return nil
+}
+
 func (e *PGEngine) ListPolicies(tenantID string) ([]types.Policy, error) {
 	rows, err := e.db.Query(`SELECT id, name, prompt_rules, tool_allowlist, rag_namespaces, output_filters, sensitive_terms, updated_at FROM policies WHERE tenant_id=$1`, tenantID)
 	if err != nil {
