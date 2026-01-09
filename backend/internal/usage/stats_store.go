@@ -141,13 +141,13 @@ func (s *UsageStore) GetStats(tenantID string, appID *string, startDate, endDate
 }
 
 // GetDailySummary 获取日汇总
-func (s *UsageStore) GetDailySummary(tenantID string, days int) ([]map[string]interface{}, error) {
+	startDate := time.Now().AddDate(0, 0, -days).Format("2006-01-02")
 	rows, err := s.db.Query(`
 		SELECT date, SUM(request_count) as requests, SUM(success_count) as success,
 			SUM(error_count) as errors, SUM(blocked_count) as blocked,
 			SUM(input_tokens) as input_tokens, SUM(output_tokens) as output_tokens
-		FROM api_usage_stats WHERE tenant_id = $1 AND date >= CURRENT_DATE - $2
-		GROUP BY date ORDER BY date DESC`, tenantID, days)
+		FROM api_usage_stats WHERE tenant_id = $1 AND date >= $2
+		GROUP BY date ORDER BY date DESC`, tenantID, startDate)
 	if err != nil {
 		return nil, err
 	}

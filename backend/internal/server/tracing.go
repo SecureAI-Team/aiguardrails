@@ -28,9 +28,6 @@ func (s *Server) registerTracingRoutes(r chi.Router) {
 
 func (s *Server) listTraces(w http.ResponseWriter, r *http.Request) {
 	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
-	}
 	limit := 100
 	if l := r.URL.Query().Get("limit"); l != "" {
 		if parsed, err := strconv.Atoi(l); err == nil {
@@ -74,9 +71,6 @@ func (s *Server) listModels(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getCostSummary(w http.ResponseWriter, r *http.Request) {
 	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
-	}
 	startDate := r.URL.Query().Get("start_date")
 	endDate := r.URL.Query().Get("end_date")
 
@@ -90,9 +84,6 @@ func (s *Server) getCostSummary(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) listExports(w http.ResponseWriter, r *http.Request) {
 	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
-	}
 	jobs, err := s.tracingStore.ListExportJobs(tenantID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

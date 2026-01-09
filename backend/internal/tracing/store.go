@@ -124,9 +124,15 @@ func (s *Store) SaveTrace(t *RequestTrace) error {
 func (s *Store) ListTraces(tenantID string, blocked *bool, statusCode *int, limit int) ([]RequestTrace, error) {
 	query := `SELECT id, trace_id, span_id, tenant_id, app_id, method, path, status_code, 
 		start_time, duration_ms, blocked, block_reason, signals, input_tokens, output_tokens, error, created_at
-		FROM request_traces WHERE tenant_id = $1`
-	args := []interface{}{tenantID}
-	argIdx := 2
+		FROM request_traces WHERE 1=1`
+	args := []interface{}{}
+	argIdx := 1
+
+	if tenantID != "" {
+		query += ` AND tenant_id = $` + string(rune('0'+argIdx))
+		args = append(args, tenantID)
+		argIdx++
+	}
 
 	if blocked != nil {
 		query += ` AND blocked = $` + string(rune('0'+argIdx))
