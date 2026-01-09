@@ -107,8 +107,8 @@ async function sendRequest() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-App-Id': appId.value,
-        'X-App-Secret': apiKey.value
+        'X-App-Id': appId.value.trim(),
+        'X-App-Secret': apiKey.value.trim()
       },
       body: requestBody.value
     })

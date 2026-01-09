@@ -27,8 +27,20 @@ func APIKeyMiddleware(svc tenant.Service) func(http.Handler) http.Handler {
 				return
 			}
 			app, err := svc.GetApp(appID)
-			if err != nil || app.APISecret != secret || app.Revoked {
-				http.Error(w, "invalid credentials", http.StatusUnauthorized)
+			if err != nil {
+				// Log detailed error
+				println("APIKeyAuth Failed: App not found or DB error:", err.Error(), "AppID:", appID)
+				http.Error(w, "invalid credentials (app lookup)", http.StatusUnauthorized)
+				return
+			}
+			if app.Revoked {
+				println("APIKeyAuth Failed: App revoked:", appID)
+				http.Error(w, "invalid credentials (revoked)", http.StatusUnauthorized)
+				return
+			}
+			if app.APISecret != secret {
+				println("APIKeyAuth Failed: Secret mismatch. AppID:", appID, "Expected len:", len(app.APISecret), "Got len:", len(secret))
+				http.Error(w, "invalid credentials (secret mismatch)", http.StatusUnauthorized)
 				return
 			}
 			ctx := context.WithValue(r.Context(), appIDKey, app.ID)
