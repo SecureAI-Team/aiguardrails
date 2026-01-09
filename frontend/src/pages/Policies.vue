@@ -66,9 +66,14 @@
           </div>
           
           <div class="form-group">
-            <label>提示词规则 (Prompt Rules)</label>
-            <textarea v-model="form.promptRules" placeholder="请输入规则ID，用逗号分隔，如: jailbreak-check, injection-check"></textarea>
-            <div class="helper-text">可用规则库中的规则ID</div>
+            <div class="rules-list">
+              <label v-for="r in availableRules" :key="r.id" class="checkbox-label" :title="r.description">
+                <input type="checkbox" :value="r.id" v-model="form.selectedRules" />
+                <span class="rule-name">{{ r.name }}</span>
+                <span class="badge badge-xs" :class="getSeverityClass(r.severity)">{{ r.severity }}</span>
+              </label>
+            </div>
+            <div v-if="availableRules.length === 0" class="muted">暂无加载规则或规则库为空</div>
           </div>
 
           <div class="form-group">
@@ -118,10 +123,11 @@ const policies = ref<any[]>([])
 const loading = ref(false)
 const showCreateModal = ref(false)
 const caps = ref<any[]>([])
+const availableRules = ref<any[]>([])
 
 const form = reactive({
   name: '',
-  promptRules: '',
+  selectedRules: [] as string[],
   ragNamespaces: '',
   sensitiveTerms: '',
   selectedCaps: [] as string[]
@@ -165,6 +171,16 @@ async function loadCaps() {
   }
 }
 
+async function loadRules() {
+  try {
+    const result = await api.listRules({})
+    availableRules.value = Array.isArray(result) ? result : []
+  } catch (e) {
+    console.error(e)
+    availableRules.value = []
+  }
+}
+
 function onTenantChange() {
   router.push({ query: { tenantId: selectedTenantId.value } })
   loadPolicies()
@@ -172,12 +188,13 @@ function onTenantChange() {
 
 function openCreateModal() {
   form.name = ''
-  form.promptRules = ''
+  form.selectedRules = []
   form.ragNamespaces = ''
   form.sensitiveTerms = ''
   form.selectedCaps = []
   showCreateModal.value = true
   if (caps.value.length === 0) loadCaps()
+  if (availableRules.value.length === 0) loadRules()
 }
 
 async function onCreate() {
@@ -186,17 +203,27 @@ async function onCreate() {
   try {
     await api.createPolicy(selectedTenantId.value, {
       name: form.name,
-      prompt_rules: form.promptRules.split(',').map(s => s.trim()).filter(Boolean),
+      prompt_rules: form.selectedRules,
       rag_namespaces: form.ragNamespaces.split(',').map(s => s.trim()).filter(Boolean),
       sensitive_terms: form.sensitiveTerms.split(',').map(s => s.trim()).filter(Boolean),
       tool_allowlist: form.selectedCaps
     })
     showCreateModal.value = false
     await loadPolicies()
-  } catch (e) {
-    alert('创建失败')
+  } catch (e: any) {
+    alert('创建失败: ' + (e.response?.data?.error || e.message))
   } finally {
     loading.value = false
+  }
+}
+
+function getSeverityClass(severity: string) {
+  switch (severity) {
+    case 'critical': return 'badge-danger'
+    case 'high': return 'badge-danger'
+    case 'medium': return 'badge-warning'
+    case 'low': return 'badge-info'
+    default: return 'badge-secondary'
   }
 }
 
@@ -232,6 +259,9 @@ onMounted(() => {
 .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 4px; display: inline-block; margin-bottom: 2px; }
 .badge-info { background: #e0f2fe; color: #075985; }
 .badge-warning { background: #fef9c3; color: #854d0e; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
+.badge-secondary { background: #f1f5f9; color: #64748b; }
+.badge-xs { font-size: 0.7rem; padding: 1px 4px; }
 
 .btn-primary { background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
 .btn-secondary { background: white; border: 1px solid #cbd5e1; color: #475569; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
@@ -244,7 +274,7 @@ onMounted(() => {
 
 /* Modal */
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { background: white; padding: 24px; border-radius: 12px; width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+.modal { background: white; padding: 24px; border-radius: 12px; width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
 .modal h3 { margin: 0 0 20px; font-size: 1.25rem; }
 
 .form-group { margin-bottom: 20px; }
@@ -254,8 +284,9 @@ onMounted(() => {
 .helper-text { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
 
-.caps-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 150px; overflow-y: auto; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; }
+.caps-list, .rules-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; }
 .checkbox-label { display: flex; gap: 8px; align-items: center; font-size: 0.9rem; margin-bottom: 0; cursor: pointer; }
 .checkbox-label:hover { background: #f8fafc; }
+.rule-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .muted { color: #94a3b8; }
 </style>
