@@ -12,7 +12,11 @@
           <router-link to="/playground">API调试</router-link>
           <router-link to="/models">模型目录</router-link>
         </div>
-        <div class="nav-links">
+        <div class="nav-links" v-if="isLoggedIn">
+          <span class="user-greeting">Hi, {{ username }}</span>
+          <router-link to="/dashboard" class="btn-primary">进入控制台</router-link>
+        </div>
+        <div class="nav-links" v-else>
           <router-link to="/login" class="btn-outline">登录</router-link>
           <router-link to="/login" class="btn-primary">免费试用</router-link>
         </div>
@@ -83,7 +87,7 @@
           <code>npm i aiguardrails</code>
         </div>
       </div>
-      <router-link to="/sdks" class="btn-outline">查看所有SDK →</router-link>
+      <router-link to="/sdks" class="btn-outline" style="color: #3b82f6; border-color: #3b82f6;">查看所有SDK →</router-link>
     </section>
 
     <!-- Advantages Section -->
@@ -173,25 +177,29 @@
     <footer class="footer">
       <div class="footer-content">
         <div class="footer-brand">
-          <span class="logo-icon">🛡️</span> AI GuardRails
+          <div class="logo">
+            <span class="logo-icon">🛡️</span> <span class="text-white font-bold text-xl">AI GuardRails</span>
+          </div>
           <p>工业AI应用安全护栏平台</p>
         </div>
         <div class="footer-cols">
           <div class="footer-col">
             <h5>产品</h5>
+            <router-link to="/sdks">SDK下载</router-link>
             <router-link to="/playground">API调试</router-link>
             <router-link to="/models">模型目录</router-link>
-            <router-link to="/sdks">SDK下载</router-link>
           </div>
           <div class="footer-col">
             <h5>资源</h5>
-            <router-link to="/sdks">开发文档</router-link>
-            <router-link to="/playground">快速入门</router-link>
+            <router-link to="/docs">帮助文档</router-link>
+            <router-link to="/api-reference">API参考</router-link>
+            <router-link to="/best-practices">最佳实践</router-link>
           </div>
           <div class="footer-col">
-            <h5>账号</h5>
-            <router-link to="/login">登录</router-link>
-            <router-link to="/login">注册</router-link>
+            <h5>公司</h5>
+            <router-link to="/about">关于我们</router-link>
+            <router-link to="/contact">联系我们</router-link>
+            <router-link to="/privacy">隐私政策</router-link>
           </div>
         </div>
       </div>
@@ -201,13 +209,25 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const isLoggedIn = ref(false)
+const username = ref('')
 
 function goToSDK(lang: string) {
   router.push('/sdks')
 }
+
+onMounted(() => {
+  const token = localStorage.getItem('token') || localStorage.getItem('auth_token')
+  const user = localStorage.getItem('username')
+  if (token) {
+    isLoggedIn.value = true
+    if (user) username.value = user
+  }
+})
 </script>
 
 <style scoped>
@@ -221,7 +241,7 @@ function goToSDK(lang: string) {
 .nav-center { display: flex; gap: 24px; }
 .nav-center a { color: #94a3b8; text-decoration: none; font-size: 0.95rem; transition: color 0.2s; }
 .nav-center a:hover { color: white; }
-.nav-links { display: flex; gap: 12px; }
+.nav-links { display: flex; gap: 12px; align-items: center; }
 .hero-content { text-align: center; padding: 60px 20px; max-width: 800px; margin: 0 auto; }
 .hero h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 20px; line-height: 1.2; }
 .highlight { background: linear-gradient(90deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
