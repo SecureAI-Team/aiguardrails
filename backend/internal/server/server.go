@@ -191,6 +191,14 @@ func (s *Server) routes() {
 			if s.orgStore != nil {
 				s.registerOrgRoutes(r)
 			}
+
+			// Rules
+			if s.rulesRepo != nil && s.ruleStore != nil {
+				s.registerRulesRoutes(r)
+			}
+			if s.tenantRuleStore != nil {
+				s.registerTenantRulesRoutes(r)
+			}
 		})
 
 		// Admin via OIDC/JWT (optional, only if OIDC is configured)
