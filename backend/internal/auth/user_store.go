@@ -11,16 +11,16 @@ import (
 
 // User represents an admin/local user.
 type User struct {
-	ID           string
-	Username     string
-	PasswordHash string
-	Role         string
-	Email        string
-	DisplayName  string
-	Status       string // active, inactive, suspended
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	LastLoginAt  *time.Time
+	ID           string     `json:"id"`
+	Username     string     `json:"username"`
+	PasswordHash string     `json:"-"`
+	Role         string     `json:"role"`
+	Email        string     `json:"email"`
+	DisplayName  string     `json:"display_name"`
+	Status       string     `json:"status"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+	LastLoginAt  *time.Time `json:"last_login_at,omitempty"`
 }
 
 // UserStore provides CRUD for users.
