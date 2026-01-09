@@ -15,6 +15,8 @@ WORKDIR /app
 RUN adduser -D -g '' appuser
 COPY --from=builder /app/aiguardrails /app/aiguardrails
 COPY migrations /app/migrations
+COPY policies /app/policies
+COPY opa /app/opa
 ENV PORT=8080 TZ=Asia/Shanghai
 EXPOSE 8080
 USER appuser

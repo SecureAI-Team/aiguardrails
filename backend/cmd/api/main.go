@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"path/filepath"
 	"time"
 
 	"aiguardrails/internal/agent"
@@ -87,7 +86,7 @@ func main() {
 	tenantUserStore := auth.NewTenantUserStore(db)
 	var opaEval *opa.Evaluator
 	if cfg.OPAEnabled {
-		opaEval, err = opa.NewFromDir(filepath.Join("backend", cfg.OPARegoPath), cfg.OPADecision, time.Duration(cfg.OPATimeoutSec)*time.Second)
+		opaEval, err = opa.NewFromDir(cfg.OPARegoPath, cfg.OPADecision, time.Duration(cfg.OPATimeoutSec)*time.Second)
 		if err != nil {
 			log.Printf("warning: opa init failed: %v", err)
 		}
