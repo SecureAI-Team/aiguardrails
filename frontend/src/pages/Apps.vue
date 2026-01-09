@@ -239,9 +239,9 @@ async function onCreate() {
     const res = await api.createApp(selectedTenantId.value, form.name, form.quota)
     showCreateModal.value = false
     
-    // Show Secret
+    // Show Secret (API Secret)
     currentApp.value = res.app || res 
-    currentKey.value = res.api_key || 'N/A'
+    currentKey.value = res.api_secret || 'N/A'
     isRotate.value = false
     showSecretModal.value = true
     
@@ -262,7 +262,7 @@ function onRotate(app: any) {
         // Fix: Use generic /apps/{id}/rotate endpoint
         const res = await api.post(`/apps/${app.id}/rotate`, {}) 
         currentApp.value = app
-        currentKey.value = res.api_key
+        currentKey.value = res.api_secret
         isRotate.value = true
         showSecretModal.value = true
       } catch (e: any) {
