@@ -13,7 +13,8 @@ type ValidationRule struct {
 	Severity    string   `json:"severity"`
 	Category    string   `json:"category"`
 	Tags        []string `json:"tags"`
-	// Minimal fields we care about for seed
+	Type        string   `json:"type,omitempty"`
+	Content     string   `json:"content,omitempty"`
 }
 
 // Convert JSON seed format to Rule struct
@@ -29,13 +30,17 @@ func LoadFromJSON(path string, store Store) error {
 
 	for _, sr := range seedRules {
 		// Map existing seed data to Rule
-		// Defaulting to OPA type for vendor rules
+		rType := RuleType(sr.Type)
+		if rType == "" {
+			rType = RuleTypeOPA
+		}
+
 		r := Rule{
 			ID:          sr.ID,
 			Name:        sr.Name,
 			Description: sr.Description,
-			Type:        RuleTypeOPA, // Current seeds are OPA rules
-			Content:     "",          // OPA content is currently in file system (.rego), we rely on ID linkage
+			Type:        rType,
+			Content:     sr.Content,
 			Severity:    sr.Severity,
 			Category:    sr.Category,
 			Tags:        sr.Tags,

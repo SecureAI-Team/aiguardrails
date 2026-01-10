@@ -103,7 +103,10 @@ func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, f
 
 	// Seed Rules
 	if err := rules.LoadFromJSON("policies/vendor_siemens.json", s.ruleStore); err != nil {
-		fmt.Printf("Warning: Failed to seed rules: %v\n", err)
+		fmt.Printf("Warning: Failed to seed vendor rules: %v\n", err)
+	}
+	if err := rules.LoadFromJSON("policies/seed_rules.json", s.ruleStore); err != nil {
+		fmt.Printf("Warning: Failed to seed additional rules: %v\n", err)
 	}
 
 	s.routes()

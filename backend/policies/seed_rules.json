@@ -1,0 +1,43 @@
+[
+    {
+        "id": "keyword-sensitive-cn",
+        "name": "国内敏感词拦截 (CN Keywords)",
+        "description": "拦截常见的国内敏感词汇，防止合规风险。",
+        "type": "keyword",
+        "content": "发票\n报销\n贿赂\n回扣\n赌博\n色情",
+        "severity": "high",
+        "category": "compliance",
+        "tags": [
+            "compliance",
+            "cn"
+        ],
+        "is_system": true
+    },
+    {
+        "id": "llm-pii-check",
+        "name": "个人隐私检测 (PII Check)",
+        "description": "使用 LLM 识别并拦截包含个人隐私信息的输出。",
+        "type": "llm",
+        "content": "You are a PII detection system. Check if the following text contains Phone Numbers, ID Card Numbers, or Email Addresses. If found, reply UNSAFE. Otherwise, reply SAFE.",
+        "severity": "critical",
+        "category": "safety",
+        "tags": [
+            "pii",
+            "safety"
+        ],
+        "is_system": true
+    },
+    {
+        "id": "opa-competitor-check",
+        "name": "竞品拦截 (Competitors)",
+        "description": "防止提及主要竞争对手名称 (Siemens, Rockwell等).",
+        "type": "opa",
+        "content": "package guardrails\n\ndeny[msg] {\n  regex.match(\"(?i)(siemens|rockwell)\", input.prompt)\n  msg := \"competitor_mention_blocked\"\n}",
+        "severity": "medium",
+        "category": "commercial",
+        "tags": [
+            "competitor"
+        ],
+        "is_system": true
+    }
+]
