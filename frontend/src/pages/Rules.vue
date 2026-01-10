@@ -49,6 +49,7 @@
               <span v-else class="badge badge-custom">自定义</span>
             </td>
             <td class="actions">
+              <button v-if="!rule.is_system" @click="openEditModal(rule)" class="btn-sm btn-outline">编辑</button>
               <button v-if="!rule.is_system" @click="deleteRule(rule.id)" class="btn-sm btn-outline btn-danger">删除</button>
               <button v-else disabled class="btn-sm btn-outline disabled">系统锁定</button>
             </td>
@@ -63,17 +64,17 @@
       </table>
     </div>
 
-    <!-- Create Modal -->
+    <!-- Create/Edit Modal -->
     <Teleport to="body">
       <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
         <div class="modal">
             <div class="modal-header">
-              <h3>新建规则</h3>
+              <h3>{{ isEdit ? '编辑规则' : '新建规则' }}</h3>
               <button @click="showModal = false" class="close-btn">&times;</button>
             </div>
             
             <div class="modal-body">
-                <form @submit.prevent="createRule">
+                <form @submit.prevent="submitRule">
                   <!-- Name -->
                   <div class="form-group">
                     <label>规则名称 <span class="required">*</span></label>
@@ -151,7 +152,7 @@
                   <div class="modal-actions">
                     <button type="button" @click="showModal = false" class="btn-secondary">取消</button>
                     <button type="submit" class="btn-primary" :disabled="loading || !newRule.name || !newRule.content">
-                      {{ loading ? '创建中...' : '确认创建' }}
+                      {{ loading ? '处理中...' : (isEdit ? '确认保存' : '确认创建') }}
                     </button>
                   </div>
                 </form>
@@ -190,6 +191,9 @@ const loading = ref(false)
 const activeTab = ref<'all'|'custom'|'system'>('all')
 
 const showModal = ref(false)
+const isEdit = ref(false)
+const editingId = ref('')
+
 const newRule = reactive({
   name: '',
   description: '',
@@ -243,6 +247,8 @@ async function loadRules() {
 }
 
 function openCreateModal() {
+  isEdit.value = false
+  editingId.value = ''
   newRule.name = ''
   newRule.description = ''
   newRule.content = ''
@@ -250,17 +256,32 @@ function openCreateModal() {
   showModal.value = true
 }
 
-async function createRule() {
+function openEditModal(rule: Rule) {
+  isEdit.value = true
+  editingId.value = rule.id
+  newRule.name = rule.name
+  newRule.description = rule.description
+  newRule.content = rule.content
+  newRule.type = rule.type
+  showModal.value = true
+}
+
+async function submitRule() {
   loading.value = true
   try {
-    await api.createRule(newRule)
+    if (isEdit.value) {
+      await api.updateRule(editingId.value, newRule)
+      showAlert('更新成功', 'success')
+    } else {
+      await api.createRule(newRule)
+      showAlert('创建成功', 'success')
+    }
     showModal.value = false
     loadRules()
-    showAlert('创建成功', 'success')
   } catch (e: any) {
     console.error(e)
     const msg = e.response?.data?.error || e.message || '未知错误'
-    showAlert('创建失败: ' + msg, 'error')
+    showAlert((isEdit.value ? '更新' : '创建') + '失败: ' + msg, 'error')
   } finally {
     loading.value = false
   }

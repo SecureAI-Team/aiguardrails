@@ -221,6 +221,7 @@ func (s *Server) routes() {
 			r.Route("/rules", func(r chi.Router) {
 				r.Get("/", s.listRules)
 				r.Post("/", s.createRule)
+				r.Put("/{id}", s.updateRule)
 				r.Delete("/{id}", s.deleteRule)
 			})
 			if s.tenantRuleStore != nil {

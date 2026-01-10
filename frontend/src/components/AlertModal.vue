@@ -1,17 +1,19 @@
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click.self="close">
-    <div class="modal">
-      <div class="modal-header">
-        <h3 :class="type === 'error' ? 'text-danger' : 'text-primary'">{{ title }}</h3>
-      </div>
-      <div class="modal-body">
-        <p>{{ message }}</p>
-      </div>
-      <div class="modal-footer">
-        <button @click="close" class="btn-primary">确定</button>
+  <Teleport to="body">
+    <div v-if="isOpen" class="modal-overlay" @click.self="close">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 :class="type === 'error' ? 'text-danger' : 'text-primary'">{{ title }}</h3>
+        </div>
+        <div class="modal-body">
+          <p>{{ message }}</p>
+        </div>
+        <div class="modal-footer">
+          <button @click="close" class="btn-primary">确定</button>
+        </div>
       </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">

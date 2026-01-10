@@ -87,6 +87,18 @@ export const api = {
     const res = await client.get(`/v1/rules?${search.toString()}`)
     return res.data
   },
+  async createRule(payload: any) {
+    const res = await client.post('/v1/rules', payload)
+    return res.data
+  },
+  async updateRule(id: string, payload: any) {
+    const res = await client.put(`/v1/rules/${id}`, payload)
+    return res.data
+  },
+  async deleteRule(id: string) {
+    const res = await client.delete(`/v1/rules/${id}`)
+    return res.data
+  },
   async attachRule(policyId: string, ruleId: string) {
     const res = await client.post(`/v1/policies/${policyId}/rules/${ruleId}`)
     return res.data
