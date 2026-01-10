@@ -518,11 +518,13 @@ func (s *Server) checkPrompt(w http.ResponseWriter, r *http.Request) {
 	}
 	// OPA check if enabled
 	if s.opaEval != nil {
+		activeRules := s.getEffectiveRules(tenantID)
 		allow, data, err := s.opaEval.Decide(r.Context(), opa.Input{
 			TenantID: tenantID,
 			AppID:    auth.AppIDFromContext(r.Context()),
 			Mode:     "prompt_check",
 			Prompt:   req.Prompt,
+			Rules:    activeRules,
 		})
 		if err == nil && !allow {
 			s.writeJSON(w, http.StatusOK, types.GuardrailResult{Allowed: false, Reason: "opa_block", Signals: []string{fmt.Sprint(data)}})
@@ -758,4 +760,22 @@ func (s *Server) writeJSON(w http.ResponseWriter, status int, payload interface{
 // Addr returns server address.
 func (s *Server) Addr() string {
 	return ":" + s.cfg.HTTPPort
+}
+
+func (s *Server) getEffectiveRules(tenantID string) []string {
+	policies, err := s.policy.ListPolicies(tenantID)
+	if err != nil {
+		return nil
+	}
+	var rules []string
+	seen := map[string]bool{}
+	for _, p := range policies {
+		for _, r := range p.PromptRules {
+			if !seen[r] {
+				rules = append(rules, r)
+				seen[r] = true
+			}
+		}
+	}
+	return rules
 }

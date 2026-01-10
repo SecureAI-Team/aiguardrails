@@ -21,6 +21,7 @@ type Input struct {
 	Tool       string      `json:"tool,omitempty"`
 	Simulation bool        `json:"simulation,omitempty"`
 	Namespaces []string    `json:"namespaces,omitempty"`
+	Rules      []string    `json:"rules,omitempty"`
 	Signals    interface{} `json:"signals,omitempty"`
 }
 
