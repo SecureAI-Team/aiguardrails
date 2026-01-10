@@ -75,7 +75,7 @@ export const api = {
     const res = await client.post(`/v1/capabilities`, payload)
     return res.data
   },
-  async listRules(params: { jurisdiction?: string; regulation?: string; vendor?: string; product?: string; severity?: string; decision?: string; tag?: string }) {
+  async listRules(params: { jurisdiction?: string; regulation?: string; vendor?: string; product?: string; severity?: string; decision?: string; tag?: string } = {}) {
     const search = new URLSearchParams()
     if (params.jurisdiction) search.set('jurisdiction', params.jurisdiction)
     if (params.regulation) search.set('regulation', params.regulation)

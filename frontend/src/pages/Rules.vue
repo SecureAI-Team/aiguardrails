@@ -300,8 +300,18 @@ onMounted(loadRules)
 
 /* Modal */
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); width: 400px; display: flex; flex-direction: column; max-height: 90vh; }
-.modal-lg { width: 900px; }
+.modal { 
+  background: white; 
+  border-radius: 12px; 
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); 
+  width: 90%; 
+  max-width: 900px; 
+  display: flex; 
+  flex-direction: column; 
+  max-height: 90vh; 
+  margin: 0 20px;
+}
+.modal-lg { max-width: 900px; }
 .modal-header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
 .modal-header h3 { margin: 0; font-size: 1.25rem; }
 .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; }
