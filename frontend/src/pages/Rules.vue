@@ -52,16 +52,29 @@
             class="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-200 border border-gray-100 flex flex-col overflow-hidden"
           >
             <!-- Badge stripe -->
-            <div :class="[rule.type === 'llm' ? 'bg-purple-500' : 'bg-green-500', 'h-1.5 w-full']"></div>
+            <div :class="[
+              rule.type === 'llm' ? 'bg-purple-500' : 
+              rule.type === 'keyword' ? 'bg-red-500' :
+              'bg-green-500', 
+              'h-1.5 w-full']"></div>
             
             <div class="p-6 flex-1 flex flex-col">
               <div class="flex items-start justify-between mb-4">
                 <span
                   class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-opacity-10"
-                  :class="rule.type === 'llm' ? 'bg-purple-50 text-purple-700' : 'bg-green-50 text-green-700'"
+                  :class="[
+                    rule.type === 'llm' ? 'bg-purple-50 text-purple-700' : 
+                    rule.type === 'keyword' ? 'bg-red-50 text-red-700' :
+                    'bg-green-50 text-green-700'
+                  ]"
                 >
-                  <span class="mr-1.5">{{ rule.type === 'llm' ? '🤖' : '📜' }}</span>
-                  {{ rule.type === 'llm' ? 'LLM Security' : 'OPA Policy' }}
+                  <span class="mr-1.5" v-if="rule.type === 'llm'">🤖</span>
+                  <span class="mr-1.5" v-else-if="rule.type === 'keyword'">🚫</span>
+                  <span class="mr-1.5" v-else>📜</span>
+                  
+                  <span v-if="rule.type === 'llm'">LLM Security</span>
+                  <span v-else-if="rule.type === 'keyword'">Keyword List</span>
+                  <span v-else>OPA Policy</span>
                 </span>
                 <span
                   v-if="rule.is_system"
@@ -166,28 +179,36 @@
 
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">规则类型</label>
-                  <div class="grid grid-cols-2 gap-4">
+                  <div class="grid grid-cols-3 gap-3">
                     <div 
                       @click="newRule.type = 'llm'"
                       :class="[
                         newRule.type === 'llm' ? 'border-indigo-500 ring-2 ring-indigo-200 bg-indigo-50' : 'border-gray-300 hover:bg-gray-50',
-                        'cursor-pointer border rounded-lg p-4 flex flex-col items-center justify-center text-center transition-all'
+                        'cursor-pointer border rounded-lg p-2 flex flex-col items-center justify-center text-center transition-all'
                       ]"
                     >
-                      <span class="text-2xl mb-2">🤖</span>
-                      <span class="font-medium text-sm text-gray-900">LLM Security</span>
-                      <span class="text-xs text-gray-500 mt-1">语义模型检测</span>
+                      <span class="text-xl mb-1">🤖</span>
+                      <span class="font-medium text-xs text-gray-900">LLM Security</span>
                     </div>
                     <div 
                       @click="newRule.type = 'opa'"
                       :class="[
                         newRule.type === 'opa' ? 'border-green-500 ring-2 ring-green-200 bg-green-50' : 'border-gray-300 hover:bg-gray-50',
-                        'cursor-pointer border rounded-lg p-4 flex flex-col items-center justify-center text-center transition-all'
+                        'cursor-pointer border rounded-lg p-2 flex flex-col items-center justify-center text-center transition-all'
                       ]"
                     >
-                      <span class="text-2xl mb-2">📜</span>
-                      <span class="font-medium text-sm text-gray-900">OPA Policy</span>
-                      <span class="text-xs text-gray-500 mt-1">Rego 代码规则</span>
+                      <span class="text-xl mb-1">📜</span>
+                      <span class="font-medium text-xs text-gray-900">OPA Policy</span>
+                    </div>
+                    <div 
+                      @click="newRule.type = 'keyword'"
+                      :class="[
+                        newRule.type === 'keyword' ? 'border-red-500 ring-2 ring-red-200 bg-red-50' : 'border-gray-300 hover:bg-gray-50',
+                        'cursor-pointer border rounded-lg p-2 flex flex-col items-center justify-center text-center transition-all'
+                      ]"
+                    >
+                      <span class="text-xl mb-1">🚫</span>
+                      <span class="font-medium text-xs text-gray-900">Keyword List</span>
                     </div>
                   </div>
                 </div>
@@ -207,10 +228,14 @@
               <div class="space-y-6">
                 <div class="flex items-center justify-between">
                   <label class="block text-sm font-medium text-gray-700">
-                    {{ newRule.type === 'llm' ? '安全指令 (System Prompt Instruction)' : 'Rego 策略代码' }}
+                    <span v-if="newRule.type === 'llm'">安全指令 (System Prompt Instruction)</span>
+                    <span v-else-if="newRule.type === 'keyword'">敏感词列表 (Blocked Keywords)</span>
+                    <span v-else>Rego 策略代码</span>
                   </label>
                   <span class="text-xs text-gray-400">
-                     {{ newRule.type === 'llm' ? '自然语言' : 'Rego Language' }}
+                     <span v-if="newRule.type === 'llm'">自然语言</span>
+                     <span v-else-if="newRule.type === 'keyword'">每行一个词</span>
+                     <span v-else>Rego Language</span>
                   </span>
                 </div>
                 
@@ -219,9 +244,7 @@
                     v-model="newRule.content"
                     rows="12"
                     class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm leading-relaxed"
-                    :placeholder="newRule.type === 'llm' ? 
-                      'You are a helpful assistant. Please ensure the response does not contain any personal identifiable information...' : 
-                      'package guardrails\n\ndefault allow = true\n\ndeny[msg] {\n  input.prompt == \"fail\"\n  msg := \"prompt blocked\"\n}'"
+                    :placeholder="placeholderText"
                   ></textarea>
                   <div class="absolute bottom-2 right-2 text-xs text-gray-400 bg-white px-1">
                     {{ newRule.content.length }} chars
@@ -232,6 +255,9 @@
                   <h4 class="text-xs font-semibold text-gray-700 mb-1">🔔 提示</h4>
                   <p v-if="newRule.type === 'llm'" class="text-xs text-gray-500">
                     此指令将作为 System Prompt 的一部分发送给 Qwen 安全模型。请清晰描述需要拦截的场景。
+                  </p>
+                  <p v-else-if="newRule.type === 'keyword'" class="text-xs text-gray-500">
+                    输入需要拦截的敏感词或短语，每行一个。
                   </p>
                   <p v-else class="text-xs text-gray-500">
                     OPA 规则需要编写合法的 Rego 代码。通常用于结构化数据的精确匹配。
@@ -274,7 +300,7 @@ interface Rule {
   id: string;
   name: string;
   description: string;
-  type: 'opa' | 'llm';
+  type: 'opa' | 'llm' | 'keyword';
   content: string;
   is_system: boolean;
 }
@@ -302,6 +328,15 @@ const tabs = computed(() => [
   { name: 'builtin', label: 'Preset Library (内置)', count: builtInRules.value.length },
   { name: 'custom', label: 'Custom Rules (自定义)', count: customRules.value.length }
 ]);
+
+const placeholderText = computed(() => {
+  if (newRule.value.type === 'llm') {
+    return 'You are a helpful assistant. Please ensure the response does not contain any personal identifiable information...';
+  } else if (newRule.value.type === 'keyword') {
+    return '敏感词1\n敏感词2\nblocked_word\n...';
+  }
+  return 'package guardrails\n\ndefault allow = true\n\ndeny[msg] {\n  input.prompt == "fail"\n  msg := "prompt blocked"\n}';
+});
 
 onMounted(() => {
   fetchRules();

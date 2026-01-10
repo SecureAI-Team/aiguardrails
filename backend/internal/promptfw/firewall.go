@@ -29,12 +29,24 @@ func (f *Firewall) WithLLM(det *policy.LLMDetector, mode string) {
 	}
 }
 
-// CheckPrompt runs prompt through guardrails: keywords plus simple heuristics.
-func (f *Firewall) CheckPrompt(tenantID, prompt string) types.GuardrailResult {
+// CheckPrompt runs prompt through guardrails: injection check + explicit keywords.
+func (f *Firewall) CheckPrompt(tenantID, prompt string, keywords []string) types.GuardrailResult {
 	if strings.Contains(strings.ToLower(prompt), "ignore previous instructions") {
 		return types.GuardrailResult{Allowed: false, Reason: "prompt_injection_detected", Signals: []string{"ignore previous instructions"}}
 	}
-	return f.policy.EvaluatePrompt(tenantID, prompt)
+
+	lowPrompt := strings.ToLower(prompt)
+	for _, kw := range keywords {
+		if strings.Contains(lowPrompt, strings.ToLower(kw)) {
+			return types.GuardrailResult{
+				Allowed: false,
+				Reason:  "keyword_block",
+				Signals: []string{kw},
+			}
+		}
+	}
+	// Note: We no longer call policy.EvaluatePrompt here because aggregation happens upstream (server)
+	return types.GuardrailResult{Allowed: true}
 }
 
 // FilterOutput applies DLP with built-in and custom terms.
@@ -58,4 +70,3 @@ func (f *Firewall) FilterOutput(tenantID, output string) types.GuardrailResult {
 	}
 	return types.GuardrailResult{Allowed: true}
 }
-

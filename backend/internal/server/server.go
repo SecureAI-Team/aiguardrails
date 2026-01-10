@@ -534,28 +534,55 @@ func (s *Server) checkPrompt(w http.ResponseWriter, r *http.Request) {
 	if tenantID == "" {
 		tenantID = auth.TenantIDFromContext(r.Context())
 	}
+
+	activeRules := s.getEffectiveRules(tenantID)
+
+	// Separate Rule IDs and Keywords
+	var ruleIDs []string
+	var keywords []string
+
+	for _, item := range activeRules {
+		// Try to find rule
+		ruleDef, err := s.ruleStore.Get(item)
+		if err == nil {
+			// Found a rule
+			if ruleDef.Type == rules.RuleTypeKeyword {
+				// Parse content (newline separated)
+				lines := strings.Split(ruleDef.Content, "\n")
+				for _, l := range lines {
+					k := strings.TrimSpace(l)
+					if k != "" {
+						keywords = append(keywords, k)
+					}
+				}
+			} else {
+				// OPA or LLM rule
+				ruleIDs = append(ruleIDs, item)
+			}
+		} else {
+			// Not a rule ID, treat as manual keyword
+			keywords = append(keywords, item)
+		}
+	}
+
 	// OPA check if enabled
 	if s.opaEval != nil {
-		activeRules := s.getEffectiveRules(tenantID)
 		allow, data, err := s.opaEval.Decide(r.Context(), opa.Input{
 			TenantID: tenantID,
 			AppID:    auth.AppIDFromContext(r.Context()),
 			Mode:     "prompt_check",
 			Prompt:   req.Prompt,
-			Rules:    activeRules,
+			Rules:    ruleIDs,
 		})
 		if err == nil && !allow {
 			s.writeJSON(w, http.StatusOK, types.GuardrailResult{Allowed: false, Reason: "opa_block", Signals: []string{fmt.Sprint(data)}})
 			return
 		}
 
-		// LLM Check if enabled (iterate active rules)
-		if s.llmGuard != nil && len(activeRules) > 0 {
-			// Fetch policies to get detailed rule info?
-			// getEffectiveRules only returns IDs.
-			// We need to look up Rule Definitions from s.ruleStore
-			for _, rid := range activeRules {
-				ruleDef, err := s.ruleStore.Get(rid)
+		// LLM Check if enabled (iterate valid ruleIDs)
+		if s.llmGuard != nil && len(ruleIDs) > 0 {
+			for _, rid := range ruleIDs {
+				ruleDef, err := s.ruleStore.Get(rid) // Should exist as we filtered above
 				if err == nil && ruleDef.Type == rules.RuleTypeLLM {
 					safe, reason, err := s.llmGuard.Check(req.Prompt, ruleDef.Content)
 					if err == nil && !safe {
@@ -570,7 +597,7 @@ func (s *Server) checkPrompt(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	result := s.firewall.CheckPrompt(tenantID, req.Prompt)
+	result := s.firewall.CheckPrompt(tenantID, req.Prompt, keywords)
 	s.writeJSON(w, http.StatusOK, result)
 }
 

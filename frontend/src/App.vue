@@ -22,6 +22,7 @@
           <RouterLink to="/users">用户</RouterLink>
           <RouterLink to="/orgs">组织</RouterLink>
           <RouterLink to="/logs">日志</RouterLink>
+          <RouterLink to="/settings">设置</RouterLink>
         </nav>
         <div class="user-menu">
           <span v-if="username">{{ username }}</span>

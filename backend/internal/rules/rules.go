@@ -9,7 +9,7 @@ type RuleType string
 const (
 	RuleTypeOPA     RuleType = "opa"
 	RuleTypeLLM     RuleType = "llm"
-	RuleTypeKeyword RuleType = "keyword" // Legacy support
+	RuleTypeKeyword RuleType = "keyword"
 )
 
 // Rule represents a guardrail definition.

@@ -36,12 +36,12 @@ type PlanRequest struct {
 
 // PlanResponse is the result of PlanAndAct.
 type PlanResponse struct {
-	Allowed     bool              `json:"allowed"`
-	Reason      string            `json:"reason,omitempty"`
-	Steps       []Step            `json:"steps"`
-	FinalResult interface{}       `json:"final_result,omitempty"`
-	TotalTime   time.Duration     `json:"total_time_ms"`
-	Signals     []string          `json:"signals,omitempty"`
+	Allowed     bool          `json:"allowed"`
+	Reason      string        `json:"reason,omitempty"`
+	Steps       []Step        `json:"steps"`
+	FinalResult interface{}   `json:"final_result,omitempty"`
+	TotalTime   time.Duration `json:"total_time_ms"`
+	Signals     []string      `json:"signals,omitempty"`
 }
 
 // Metrics tracks agent execution stats.
@@ -64,11 +64,11 @@ func (m *Metrics) record(blocked bool, iterations int) {
 
 // Gateway orchestrates agent interactions with guardrails.
 type Gateway struct {
-	policy   policy.Engine
-	firewall *promptfw.Firewall
-	sandbox  *Sandbox
-	registry *Registry
-	metrics  *Metrics
+	policy         policy.Engine
+	firewall       *promptfw.Firewall
+	sandbox        *Sandbox
+	registry       *Registry
+	metrics        *Metrics
 	defaultMaxIter int
 	defaultTimeout time.Duration
 }
@@ -138,7 +138,7 @@ func (g *Gateway) PlanAndAct(ctx context.Context, req PlanRequest) (*PlanRespons
 	defer cancel()
 
 	// Phase 1: Check prompt
-	check := g.firewall.CheckPrompt(req.TenantID, req.Prompt)
+	check := g.firewall.CheckPrompt(req.TenantID, req.Prompt, []string{})
 	if !check.Allowed {
 		resp.Allowed = false
 		resp.Reason = check.Reason

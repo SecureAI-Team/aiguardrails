@@ -76,7 +76,8 @@
                 <input type="checkbox" :value="r.id" v-model="form.selectedRules" />
                 <span class="rule-name">{{ r.name }}</span>
                 <span v-if="r.type === 'llm'" title="LLM Security Check">🤖</span>
-                <span v-if="r.type === 'opa'" title="OPA Policy">📜</span>
+                <span v-else-if="r.type === 'opa'" title="OPA Policy">📜</span>
+                <span v-else-if="r.type === 'keyword'" title="Keyword List">🚫</span>
                 <span class="badge badge-xs" :class="getSeverityClass(r.severity)">{{ r.severity }}</span>
               </label>
             </div>
