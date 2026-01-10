@@ -19,6 +19,12 @@ deny_reason[msg] {
   msg := {"allow": false, "reason": "opa_block_output", "signals": [ban]}
 }
 
+# Adapter: Support simple deny[msg] rules from dynamic store
+deny_reason[msg] {
+    reason := deny[_]
+    msg := {"allow": false, "reason": "opa_block", "signals": [reason]}
+}
+
 allow = false {
   r := deny_reason[_]
   r.allow == false

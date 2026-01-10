@@ -32,7 +32,7 @@
         "name": "竞品拦截 (Competitors)",
         "description": "防止提及主要竞争对手名称 (Siemens, Rockwell等).",
         "type": "opa",
-        "content": "package guardrails\n\ndeny[msg] {\n  regex.match(\"(?i)(siemens|rockwell)\", input.prompt)\n  msg := \"competitor_mention_blocked\"\n}",
+        "content": "package guardrails\n\ndeny[msg] {\n  regex.match(\"(?i)(siemens|rockwell|schneider)\", input.prompt)\n  msg := \"competitor_mention_blocked\"\n}",
         "severity": "medium",
         "category": "commercial",
         "tags": [
