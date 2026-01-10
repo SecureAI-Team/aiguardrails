@@ -24,7 +24,7 @@ func (s *Server) syncOPARules() {
 	allRules, err := s.ruleStore.List()
 	if err == nil {
 		for _, r := range allRules {
-			if r.Type == rules.RuleTypeOPA {
+			if r.Type == rules.RuleTypeOPA && r.Content != "" {
 				// Create a unique module name
 				name := fmt.Sprintf("dynamic_%s.rego", r.ID)
 				modules[name] = r.Content
