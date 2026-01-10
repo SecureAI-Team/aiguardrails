@@ -168,7 +168,7 @@ onMounted(() => {
 async function fetchRules() {
   try {
     const res = await api.get('/rules');
-    rules.value = res.data;
+    rules.value = Array.isArray(res.data) ? res.data : [];
   } catch (e) {
     console.error(e);
   }
