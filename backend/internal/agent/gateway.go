@@ -226,8 +226,8 @@ func (g *Gateway) PlanAndAct(ctx context.Context, req PlanRequest) (*PlanRespons
 			break
 		}
 
-		// Filter observation through output filter
-		filterResult := g.firewall.FilterOutput(req.TenantID, step.Observation)
+		// FilterOutput through output filter
+		filterResult := g.firewall.FilterOutput(req.TenantID, step.Observation, nil)
 		if !filterResult.Allowed {
 			resp.Allowed = false
 			resp.Reason = filterResult.Reason
