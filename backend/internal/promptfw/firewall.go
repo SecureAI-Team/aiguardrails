@@ -50,8 +50,12 @@ func (f *Firewall) CheckPrompt(tenantID, prompt string, keywords []string) types
 }
 
 // FilterOutput applies DLP with built-in and custom terms.
-func (f *Firewall) FilterOutput(tenantID, output string) types.GuardrailResult {
+func (f *Firewall) FilterOutput(tenantID, output string, extraTerms []string) types.GuardrailResult {
 	custom := f.policy.CustomTerms(tenantID)
+	// Merge extra terms
+	if len(extraTerms) > 0 {
+		custom = append(custom, extraTerms...)
+	}
 	dlp := policy.DetectDLP(output, custom)
 	if dlp.Hit {
 		return types.GuardrailResult{Allowed: false, Reason: dlp.Reason, Signals: dlp.Matches}

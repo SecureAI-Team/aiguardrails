@@ -37,7 +37,7 @@ type Evaluator struct {
 
 // NewFromDir loads all .rego files under dir and builds evaluator.
 func NewFromDir(dir, decision string, timeout time.Duration) (*Evaluator, error) {
-	modules, err := loadModules(dir)
+	modules, err := LoadModules(dir)
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +52,8 @@ func NewFromDir(dir, decision string, timeout time.Duration) (*Evaluator, error)
 	}, nil
 }
 
-// loadModules reads all .rego files from directory.
-func loadModules(dir string) (map[string]string, error) {
+// LoadModules reads all .rego files from directory.
+func LoadModules(dir string) (map[string]string, error) {
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func loadModules(dir string) (map[string]string, error) {
 
 // Reload reloads modules from directory or raw content.
 func (e *Evaluator) Reload(dir string) error {
-	modules, err := loadModules(dir)
+	modules, err := LoadModules(dir)
 	if err != nil {
 		return err
 	}

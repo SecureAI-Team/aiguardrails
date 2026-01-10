@@ -40,6 +40,9 @@ func (s *Server) createRule(w http.ResponseWriter, r *http.Request) {
 
 	// If rule is OPA, we might need to trigger reload?
 	// For now just save metadata.
+	if req.Type == rules.RuleTypeOPA {
+		s.syncOPARules()
+	}
 
 	s.writeJSON(w, http.StatusCreated, req)
 }
@@ -50,5 +53,6 @@ func (s *Server) deleteRule(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	s.syncOPARules()
 	s.writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }

@@ -67,66 +67,155 @@
     <Teleport to="body">
       <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
         <div class="modal modal-lg">
-          <div class="modal-header">
-            <h3>新建规则</h3>
-            <button @click="showModal = false" class="close-btn">&times;</button>
-          </div>
-          
-          <div class="modal-body">
-            <div class="form-grid">
-              <!-- Left: Meta -->
-              <div class="form-col">
-                <div class="form-group">
-                  <label>规则名称</label>
-                  <input v-model="newRule.name" placeholder="例如: 拒绝竞品信息" class="form-input" />
-                </div>
-                
-                <div class="form-group">
-                  <label>规则类型</label>
-                  <div class="type-selector">
-                    <div 
-                      v-for="t in ['llm', 'opa', 'keyword']" 
-                      :key="t"
-                      :class="['type-option', newRule.type === t ? 'active' : '']"
-                      @click="newRule.type = t"
-                    >
-                      <span v-if="t==='llm'">🤖 LLM Security</span>
-                      <span v-else-if="t==='opa'">📜 OPA Policy</span>
-                      <span v-else>🚫 Keyword List</span>
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <div>
+                <h3 class="text-xl font-bold text-gray-900">新建规则</h3>
+                <p class="mt-1 text-sm text-gray-500">配置安全护栏规则以拦截风险内容。</p>
+              </div>
+              <button @click="showModal = false" class="rounded-full p-1 bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-500 transition">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div class="px-6 py-6 bg-gray-50/30 flex-1 overflow-hidden flex flex-col">
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
+                <!-- Left Column: Settings -->
+                <div class="lg:col-span-4 space-y-6 overflow-y-auto pr-2">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">规则名称 <span class="text-red-500">*</span></label>
+                    <input
+                      v-model="newRule.name"
+                      type="text"
+                      class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2.5 transition"
+                      placeholder="例如: 拒绝竞品信息"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">规则类型</label>
+                    <div class="grid grid-cols-1 gap-3">
+                      <!-- LLM Type -->
+                      <div 
+                        @click="newRule.type = 'llm'"
+                        :class="[
+                          newRule.type === 'llm' ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50/50' : 'border-gray-200 hover:border-gray-300 bg-white shadow-sm',
+                          'cursor-pointer relative flex items-center px-4 py-3 border rounded-xl transition-all duration-200'
+                        ]"
+                      >
+                         <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg" :class="newRule.type === 'llm' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'">
+                           <span class="text-xl">🤖</span>
+                         </div>
+                         <div class="ml-3">
+                           <p class="text-sm font-medium text-gray-900">LLM Security</p>
+                           <p class="text-xs text-gray-500">语义检测</p>
+                         </div>
+                      </div>
+
+                      <!-- OPA Type -->
+                      <div 
+                        @click="newRule.type = 'opa'"
+                        :class="[
+                          newRule.type === 'opa' ? 'border-green-500 ring-1 ring-green-500 bg-green-50/50' : 'border-gray-200 hover:border-gray-300 bg-white shadow-sm',
+                          'cursor-pointer relative flex items-center px-4 py-3 border rounded-xl transition-all duration-200'
+                        ]"
+                      >
+                         <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg" :class="newRule.type === 'opa' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'">
+                           <span class="text-xl">📜</span>
+                         </div>
+                         <div class="ml-3">
+                           <p class="text-sm font-medium text-gray-900">OPA Policy</p>
+                           <p class="text-xs text-gray-500">逻辑代码</p>
+                         </div>
+                      </div>
+
+                      <!-- Keyword Type -->
+                      <div 
+                        @click="newRule.type = 'keyword'"
+                        :class="[
+                          newRule.type === 'keyword' ? 'border-red-500 ring-1 ring-red-500 bg-red-50/50' : 'border-gray-200 hover:border-gray-300 bg-white shadow-sm',
+                          'cursor-pointer relative flex items-center px-4 py-3 border rounded-xl transition-all duration-200'
+                        ]"
+                      >
+                         <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg" :class="newRule.type === 'keyword' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'">
+                           <span class="text-xl">🚫</span>
+                         </div>
+                         <div class="ml-3">
+                           <p class="text-sm font-medium text-gray-900">Keyword List</p>
+                           <p class="text-xs text-gray-500">敏感词库</p>
+                         </div>
+                      </div>
                     </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">描述</label>
+                    <textarea
+                      v-model="newRule.description"
+                      rows="3"
+                      class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2"
+                      placeholder="简要描述规则的用途..."
+                    ></textarea>
                   </div>
                 </div>
 
-                <div class="form-group">
-                  <label>描述</label>
-                  <textarea v-model="newRule.description" rows="3" class="form-input" placeholder="简要描述规则用途"></textarea>
-                </div>
-              </div>
-
-              <!-- Right: Content -->
-              <div class="form-col full-height">
-                <div class="form-group flex-1">
-                  <label>
-                    <span v-if="newRule.type === 'llm'">System Prompt 指令</span>
-                    <span v-else-if="newRule.type === 'keyword'">敏感词列表 (每行一个)</span>
-                    <span v-else>Rego 代码</span>
-                  </label>
-                  <textarea 
-                    v-model="newRule.content" 
-                    class="form-input code-editor" 
-                    :placeholder="placeholderText"
-                  ></textarea>
+                <!-- Right Column: Content -->
+                <div class="lg:col-span-8 flex flex-col h-full overflow-hidden">
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="block text-sm font-semibold text-gray-700">
+                      <span v-if="newRule.type === 'llm'">System Prompt 指令</span>
+                      <span v-else-if="newRule.type === 'keyword'">敏感词列表 (每行一个)</span>
+                      <span v-else>Rego 策略代码</span>
+                       <span class="text-red-500">*</span>
+                    </label>
+                    <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 border border-blue-100">
+                       {{ newRule.type === 'llm' ? 'Natural Language' : newRule.type === 'keyword' ? 'Line separated' : 'Rego' }}
+                    </span>
+                  </div>
+                  
+                  <div class="relative flex-1 rounded-lg border border-gray-300 shadow-sm overflow-hidden focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500 bg-white">
+                    <textarea
+                      v-model="newRule.content"
+                      class="block w-full h-full resize-none border-0 p-4 font-mono text-sm leading-relaxed focus:ring-0"
+                      :placeholder="placeholderText"
+                      spellcheck="false"
+                    ></textarea>
+                  </div>
+                  
+                  <!-- Tip Box -->
+                  <div class="mt-4 rounded-lg bg-gray-50 p-3 border border-gray-200 flex items-start text-xs text-gray-600">
+                    <svg class="h-4 w-4 text-gray-400 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span v-if="newRule.type === 'llm'">该指令将嵌入到 System Prompt 中，用于指导大模型进行安全拦截。请使用清晰的自然语言描述。</span>
+                    <span v-else-if="newRule.type === 'keyword'">输入需要拦截的敏感词汇，每行一个。支持精确匹配。</span>
+                    <span v-else>使用 Open Policy Agent (OPA) 的 Rego 语言编写复杂策略。必须包含 'default allow' 和 'deny' 规则。</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="modal-actions">
-            <button @click="showModal = false" class="btn-secondary">取消</button>
-            <button @click="createRule" class="btn-primary" :disabled="loading || !newRule.name || !newRule.content">
-              {{ loading ? '创建中...' : '确认创建' }}
-            </button>
-          </div>
+            <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3 border-t border-gray-200">
+              <button
+                @click="showModal = false"
+                class="px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition shadow-sm"
+              >
+                取消
+              </button>
+              <button
+                @click="createRule"
+                :disabled="loading || !newRule.name || !newRule.content"
+                class="px-5 py-2.5 bg-indigo-600 rounded-lg text-white font-medium hover:bg-indigo-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              >
+                <svg v-if="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {{ loading ? '创建中...' : '确认创建' }}
+              </button>
+            </div>
         </div>
       </div>
     </Teleport>
@@ -228,8 +317,10 @@ async function createRule() {
     showModal.value = false
     loadRules()
     showAlert('创建成功', 'success')
-  } catch (e) {
-    showAlert('创建失败', 'error')
+  } catch (e: any) {
+    console.error(e)
+    const msg = e.response?.data?.error || e.message || '未知错误'
+    showAlert('创建失败: ' + msg, 'error')
   } finally {
     loading.value = false
   }

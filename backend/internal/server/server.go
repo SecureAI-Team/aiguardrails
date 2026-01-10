@@ -109,6 +109,9 @@ func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, f
 		fmt.Printf("Warning: Failed to seed additional rules: %v\n", err)
 	}
 
+	// Initial OPA Sync
+	s.syncOPARules()
+
 	s.routes()
 	return s
 }
@@ -633,7 +636,8 @@ func (s *Server) checkOutput(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	result := s.firewall.FilterOutput(tenantID, req.Output)
+	_, keywords := s.resolveRules(tenantID)
+	result := s.firewall.FilterOutput(tenantID, req.Output, keywords)
 	s.writeJSON(w, http.StatusOK, result)
 }
 
