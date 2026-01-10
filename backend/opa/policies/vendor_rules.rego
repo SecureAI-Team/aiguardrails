@@ -48,8 +48,8 @@ siemens_products = [
 # ===== 厂商限制规则 =====
 
 # 检查提示词是否包含竞品厂商
+# 检查提示词是否包含竞品厂商
 deny_reason[msg] {
-  # 触发条件：mode为vendor_check 或 mode为prompt_check且启用了对应规则
   lp := lower(input.prompt)
   vendor := blocked_vendors[_]
   contains(lp, vendor)
@@ -58,11 +58,7 @@ deny_reason[msg] {
   rule_id := concat("-", ["competitor", vendor, "block"])
   
   # Logic: (Mode is vendor_check) OR (RuleID is in active rules)
-  (
-    input.mode == "vendor_check"
-    |
-    input.rules[_] == rule_id
-  )
+  should_check(input, rule_id)
 
   msg := {
     "allow": false, 
@@ -78,11 +74,6 @@ deny_reason[msg] {
   product := blocked_products[_]
   contains(lp, product)
   
-  # 这里简化处理：因为产品太多，我们假设所有blocked_products都受 "competitor-{vendor}-block" 规则控制
-  # 但要知道产品属于哪个vendor比较困难。这里暂时只检查 mode == vendor_check
-  # 如果要精细控制，需要产品->厂商映射表。
-  # 鉴于Demo演示，我们只在 mode == vendor_check 时启用产品检查，或者如果用户启用了任意competitor规则？
-  # 暂时保持原样只针对 vendor_check 模式 (更严格)
   input.mode == "vendor_check"
 
   msg := {
@@ -96,19 +87,14 @@ deny_reason[msg] {
 # 检查输出是否包含竞品信息（需要脱敏）
 deny_reason[msg] {
   # 输出过滤通常总是启用，或者也依赖规则
-  (input.mode == "vendor_check" | input.mode == "output_filter")
+  mode_check_output(input.mode)
   
   lo := lower(input.output)
   vendor := blocked_vendors[_]
   contains(lo, vendor)
   
-  # 同上：只在启用了规则时生效
   rule_id := concat("-", ["competitor", vendor, "block"])
-  (
-    input.mode == "vendor_check"
-    |
-    input.rules[_] == rule_id
-  )
+  should_check(input, rule_id)
 
   msg := {
     "allow": false, 
@@ -116,6 +102,17 @@ deny_reason[msg] {
     "signals": [vendor, "category:vendor_restriction", "decision:redact"]
   }
 }
+
+# Helper functions
+should_check(input, rule_id) {
+  input.mode == "vendor_check"
+}
+should_check(input, rule_id) {
+  input.rules[_] == rule_id
+}
+
+mode_check_output("vendor_check") = true
+mode_check_output("output_filter") = true
 
 # ===== 西门子产品识别 =====
 
