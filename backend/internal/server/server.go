@@ -288,8 +288,38 @@ func (s *Server) checkRAG(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Fallback to standard prompt check (keywords etc)
-	res := s.firewall.CheckPrompt(tenantID, req.Prompt)
+	// Fallback to standard prompt check (keywords etc)
+	_, keywords := s.resolveRules(tenantID)
+	res := s.firewall.CheckPrompt(tenantID, req.Prompt, keywords)
 	s.writeJSON(w, http.StatusOK, res)
+}
+
+func (s *Server) resolveRules(tenantID string) (ruleIDs []string, keywords []string) {
+	activeRules := s.getEffectiveRules(tenantID)
+	for _, item := range activeRules {
+		// Try to find rule
+		ruleDef, err := s.ruleStore.Get(item)
+		if err == nil {
+			// Found a rule
+			if ruleDef.Type == rules.RuleTypeKeyword {
+				// Parse content (newline separated)
+				lines := strings.Split(ruleDef.Content, "\n")
+				for _, l := range lines {
+					k := strings.TrimSpace(l)
+					if k != "" {
+						keywords = append(keywords, k)
+					}
+				}
+			} else {
+				// OPA or LLM rule
+				ruleIDs = append(ruleIDs, item)
+			}
+		} else {
+			// Not a rule ID, treat as manual keyword
+			keywords = append(keywords, item)
+		}
+	}
+	return
 }
 
 type tenantRequest struct {
@@ -535,35 +565,7 @@ func (s *Server) checkPrompt(w http.ResponseWriter, r *http.Request) {
 		tenantID = auth.TenantIDFromContext(r.Context())
 	}
 
-	activeRules := s.getEffectiveRules(tenantID)
-
-	// Separate Rule IDs and Keywords
-	var ruleIDs []string
-	var keywords []string
-
-	for _, item := range activeRules {
-		// Try to find rule
-		ruleDef, err := s.ruleStore.Get(item)
-		if err == nil {
-			// Found a rule
-			if ruleDef.Type == rules.RuleTypeKeyword {
-				// Parse content (newline separated)
-				lines := strings.Split(ruleDef.Content, "\n")
-				for _, l := range lines {
-					k := strings.TrimSpace(l)
-					if k != "" {
-						keywords = append(keywords, k)
-					}
-				}
-			} else {
-				// OPA or LLM rule
-				ruleIDs = append(ruleIDs, item)
-			}
-		} else {
-			// Not a rule ID, treat as manual keyword
-			keywords = append(keywords, item)
-		}
-	}
+	ruleIDs, keywords := s.resolveRules(tenantID)
 
 	// OPA check if enabled
 	if s.opaEval != nil {
