@@ -37,7 +37,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "token error", http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, http.StatusOK, loginResponse{Token: token})
+	s.writeJSON(w, http.StatusOK, loginResponse{Token: token})
 }
 
 func (s *Server) register(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +71,7 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "token error", http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, http.StatusCreated, loginResponse{Token: token})
+	s.writeJSON(w, http.StatusCreated, loginResponse{Token: token})
 }
 
 func (s *Server) authMiddleware(next http.Handler) http.Handler {

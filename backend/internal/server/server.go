@@ -210,10 +210,7 @@ func (s *Server) routes() {
 				s.registerOrgRoutes(r)
 			}
 
-			// Rules
-			if s.rulesRepo != nil && s.ruleStore != nil {
-				s.registerRulesRoutes(r)
-			}
+			// Rules (Old Register removed)
 			// New Rules API
 			r.Route("/rules", func(r chi.Router) {
 				r.Get("/", s.listRules)
@@ -243,9 +240,7 @@ func (s *Server) routes() {
 				r.With(rbac.RequirePerm(rbac.PermManagePolicy)).Get("/tenants/{tenantID}/policies/history", s.listPolicyHistory)
 				r.With(rbac.RequirePerm(rbac.PermManageApps)).Post("/capabilities", s.createCapability)
 				r.With(rbac.RequirePerm(rbac.PermViewLogs)).Get("/audit", s.listAudit)
-				if s.rulesRepo != nil && s.ruleStore != nil {
-					s.registerRulesRoutes(r)
-				}
+				// Rules (Old Register removed)
 				if s.tenantRuleStore != nil {
 					s.registerTenantRulesRoutes(r)
 				}
