@@ -81,7 +81,7 @@ func (s *Server) updateRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.ruleStore.Add(req); err != nil {
+	if err := s.ruleStore.Update(req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
