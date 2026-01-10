@@ -1,81 +1,136 @@
 <template>
-  <div class="page-container">
-    <div class="page-header">
-      <h2>规则库</h2>
-      <div class="alert-banner">
-        ⓘ 规则库为只读参考。请在 "配置策略" (Policies) 中引用这些规则。
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Rule Library</h1>
+        <p class="mt-1 text-sm text-gray-500">
+          Manage reuseable guardrail rules (OPA Policy or LLM Check).
+        </p>
+      </div>
+      <button
+        @click="openCreateModal"
+        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+      >
+        <span class="mr-2">+</span> Create Rule
+      </button>
+    </div>
+
+    <!-- Rule List -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+      <ul role="list" class="divide-y divide-gray-200">
+        <li v-for="rule in rules" :key="rule.id" class="px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center space-x-3">
+                <span class="text-sm font-medium text-indigo-600 truncate">{{ rule.name }}</span>
+                <span
+                  v-if="rule.type === 'llm'"
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                >
+                  <span class="mr-1">🤖</span> LLM Security
+                </span>
+                <span
+                  v-else
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                >
+                  <span class="mr-1">📜</span> OPA Policy
+                </span>
+                <span
+                  v-if="rule.is_system"
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800"
+                >
+                  System
+                </span>
+              </div>
+              <p class="mt-1 text-sm text-gray-500 truncate">{{ rule.description }}</p>
+            </div>
+            <div class="flex items-center space-x-4">
+              <span class="text-xs text-gray-400">ID: {{ rule.id }}</span>
+              <button
+                v-if="!rule.is_system"
+                @click="deleteRule(rule.id)"
+                class="text-red-600 hover:text-red-900 text-sm"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </li>
+      </ul>
+      <div v-if="rules.length === 0" class="px-6 py-12 text-center text-gray-500">
+        No rules found. Create one to get started.
       </div>
     </div>
 
-    <div class="filter-bar">
-      <input v-model="filters.jurisdiction" placeholder="司法管辖区 (如 EU)" class="filter-input" />
-      <input v-model="filters.regulation" placeholder="法规 (如 GDPR)" class="filter-input" />
-      <input v-model="filters.tag" placeholder="标签" class="filter-input" />
-      <select v-model="filters.severity" class="filter-select">
-        <option value="">全部严重性</option>
-        <option value="low">低</option>
-        <option value="medium">中</option>
-        <option value="high">高</option>
-        <option value="critical">严重</option>
-      </select>
-      <button @click="load" class="btn-primary" :disabled="loading">搜索</button>
-    </div>
+    <!-- Create Modal -->
+    <div
+      v-if="showModal"
+      class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50"
+    >
+      <div class="bg-white rounded-lg max-w-2xl w-full p-6 space-y-4">
+        <h3 class="text-lg font-medium text-gray-900">Create New Rule</h3>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Name</label>
+            <input
+              v-model="newRule.name"
+              type="text"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder="e.g. Block Personal Info"
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Type</label>
+            <select
+              v-model="newRule.type"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            >
+              <option value="llm">LLM Security (AI Check)</option>
+              <option value="opa">OPA Policy (Rego)</option>
+            </select>
+          </div>
 
-    <div class="table-container">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>规则名称</th>
-            <th>法规/管辖区</th>
-            <th>厂商/产品</th>
-            <th>严重性</th>
-            <th>处置动作</th>
-            <th>描述</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="r in rules" :key="r.id">
-            <td class="font-bold">{{ r.name }}</td>
-            <td>
-              <div v-if="r.regulation || r.jurisdiction">
-                <span v-if="r.regulation" class="badge badge-info">{{ r.regulation }}</span>
-                <span v-if="r.jurisdiction" class="badge badge-warning">{{ r.jurisdiction }}</span>
-              </div>
-              <span v-else>-</span>
-            </td>
-            <td>
-              <div v-if="r.vendor">{{ r.vendor }} {{ r.product }}</div>
-              <span v-else>-</span>
-            </td>
-            <td>
-              <span :class="['badge', getSeverityClass(r.severity)]">{{ r.severity }}</span>
-            </td>
-            <td>
-              <span :class="['badge', r.decision === 'block' ? 'badge-danger' : 'badge-success']">{{ r.decision || 'block' }}</span>
-            </td>
-            <td class="desc-cell" :title="r.description">{{ r.description }}</td>
-            <td>
-              <button @click="viewRule(r)" class="btn-xs">查看详情</button>
-            </td>
-          </tr>
-          <tr v-if="rules.length === 0">
-            <td colspan="6" class="empty-state">未找到匹配的规则</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Description</label>
+            <input
+              v-model="newRule.description"
+              type="text"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+          </div>
 
-
-    <!-- Rule Detail Modal -->
-    <div v-if="selectedRule" class="modal-overlay" @click.self="selectedRule = null">
-      <div class="modal">
-        <h3>规则详情: {{ selectedRule.name }}</h3>
-        <div class="detail-content">
-          <pre>{{ JSON.stringify(selectedRule, null, 2) }}</pre>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">
+              {{ newRule.type === 'llm' ? 'Safety Instruction (Prompt)' : 'Rego Policy Code' }}
+            </label>
+            <textarea
+              v-model="newRule.content"
+              rows="6"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-mono text-sm"
+              :placeholder="newRule.type === 'llm' ? 'e.g. Detect and block any content related to ...' : 'package guardrails\n\ndeny[msg] { ... }'"
+            ></textarea>
+            <p class="mt-1 text-xs text-gray-500">
+              {{ newRule.type === 'llm' ? 'This instruction will be sent to the Safety LLM.' : 'Standard OPA Rego code.' }}
+            </p>
+          </div>
         </div>
-        <div class="modal-actions">
-          <button @click="selectedRule = null" class="btn-primary">关闭</button>
+
+        <div class="flex justify-end space-x-3 mt-6">
+          <button
+            @click="showModal = false"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            @click="createRule"
+            :disabled="loading"
+            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {{ loading ? 'Creating...' : 'Create Rule' }}
+          </button>
         </div>
       </div>
     </div>
@@ -83,89 +138,68 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { api } from '../services/api'
+import { ref, onMounted } from 'vue';
+import { api } from '../services/api';
 
-const rules = ref<any[]>([])
-const loading = ref(false)
-const selectedRule = ref<any>(null)
-
-function viewRule(r: any) {
-  selectedRule.value = r
+interface Rule {
+  id: string;
+  name: string;
+  description: string;
+  type: 'opa' | 'llm';
+  content: string;
+  is_system: boolean;
 }
 
-const filters = reactive({
-  jurisdiction: '',
-  regulation: '',
-  vendor: '',
-  product: '',
-  tag: '',
-  severity: '',
-  decision: ''
-})
+const rules = ref<Rule[]>([]);
+const showModal = ref(false);
+const loading = ref(false);
 
-async function load() {
-  loading.value = true
+const newRule = ref({
+  name: '',
+  description: '',
+  type: 'llm',
+  content: ''
+});
+
+onMounted(() => {
+  fetchRules();
+});
+
+async function fetchRules() {
   try {
-    const result = await api.listRules(filters)
-    rules.value = Array.isArray(result) ? result : []
+    const res = await api.get('/rules');
+    rules.value = res.data;
   } catch (e) {
-    console.error(e)
-    rules.value = []
+    console.error(e);
+  }
+}
+
+function openCreateModal() {
+  newRule.value = { name: '', description: '', type: 'llm', content: '' };
+  showModal.value = true;
+}
+
+async function createRule() {
+  if (!newRule.value.name || !newRule.value.content) return;
+  loading.value = true;
+  try {
+    await api.post('/rules', newRule.value);
+    showModal.value = false;
+    await fetchRules();
+  } catch (e) {
+    alert('Failed to create rule');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
-function getSeverityClass(severity: string) {
-  switch (severity) {
-    case 'critical': return 'badge-danger'
-    case 'high': return 'badge-danger'
-    case 'medium': return 'badge-warning'
-    case 'low': return 'badge-info'
-    default: return 'badge-secondary'
+async function deleteRule(id: string) {
+  if (!confirm('Are you sure?')) return;
+  try {
+    await api.delete(`/rules/${id}`);
+    await fetchRules();
+  } catch (e) {
+    alert('Failed to delete rule');
   }
 }
-
-onMounted(load)
 </script>
-
-<style scoped>
-.page-container { padding: 24px; }
-.page-header { margin-bottom: 24px; }
-.page-header h2 { margin: 0; font-size: 1.5rem; color: #1e293b; }
-
-.filter-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; background: white; padding: 16px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-.filter-input, .filter-select { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; }
-.filter-input { width: 180px; }
-
-.table-container { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th, .data-table td { padding: 16px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-.data-table th { background: #f8fafc; font-weight: 600; color: #64748b; font-size: 0.875rem; }
-.data-table tr:hover { background: #f8fafc; }
-
-.font-bold { font-weight: 600; color: #1e293b; }
-.desc-cell { max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #64748b; }
-
-.badge { padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; margin-right: 4px; display: inline-block; }
-.badge-info { background: #e0f2fe; color: #075985; }
-.badge-warning { background: #fef9c3; color: #854d0e; }
-.badge-danger { background: #fee2e2; color: #991b1b; }
-.badge-success { background: #dcfce7; color: #166534; }
-.badge-secondary { background: #f1f5f9; color: #64748b; }
-
-.btn-primary { background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-.btn-primary:hover { background: #1d4ed8; }
-.btn-primary:disabled { opacity: 0.7; }
-
-.empty-state { text-align: center; padding: 40px; color: #94a3b8; }
-
-.alert-banner { background: #eff6ff; color: #1e40af; padding: 10px 16px; border-radius: 6px; font-size: 0.9rem; border: 1px solid #dbeafe; display: inline-block; margin-left: 20px; }
-.btn-xs { padding: 4px 10px; font-size: 0.8rem; background: white; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; }
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { background: white; padding: 24px; border-radius: 12px; width: 600px; max-height: 80vh; display: flex; flex-direction: column; }
-.detail-content { background: #f8fafc; padding: 16px; border-radius: 8px; margin: 16px 0; overflow: auto; max-height: 400px; }
-.detail-content pre { margin: 0; font-family: monospace; font-size: 0.85rem; color: #334155; }
-.modal-actions { text-align: right; }
-</style>

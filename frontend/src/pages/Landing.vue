@@ -53,6 +53,18 @@
           <router-link to="/playground" class="feature-link">立即体验 →</router-link>
         </div>
         <div class="feature-card">
+          <div class="feature-icon">🤖</div>
+          <h3>LLM Security</h3>
+          <p>集成安全大模型 (Qwen) 进行深度语义分析，识别隐晦攻击</p>
+          <router-link to="/playground" class="feature-link">立即体验 →</router-link>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🧩</div>
+          <h3>灵活规则库</h3>
+          <p>支持自定义 OPA 策略或 LLM 提示词规则，无限扩展</p>
+          <router-link to="/rules" class="feature-link">管理规则 →</router-link>
+        </div>
+        <div class="feature-card">
           <div class="feature-icon">🔐</div>
           <h3>工具访问控制</h3>
           <p>Agent工具执行沙箱隔离，权限分级管理</p>

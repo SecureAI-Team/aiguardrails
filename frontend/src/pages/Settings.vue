@@ -3,6 +3,26 @@
     <h2>🔧 系统设置</h2>
 
     <div class="settings-section">
+      <h3>🤖 安全模型配置 (LLM Security)</h3>
+      <div class="config-group">
+        <h4>通义千问 (Qwen)</h4>
+        <div class="config-row">
+          <label>API Endpoint</label>
+          <input v-model="config.qwen_endpoint" placeholder="https://dashscope.aliyuncs.com/..." />
+        </div>
+        <div class="config-row">
+          <label>API Key</label>
+          <input v-model="config.qwen_api_key" type="password" placeholder="sk-..." />
+        </div>
+        <div class="config-status">
+          <span :class="config.qwen_api_key ? 'enabled' : 'disabled'">
+            {{ config.qwen_api_key ? '✅ 已配置' : '❌ 未配置' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <h3>🔐 社交登录配置</h3>
       
       <div class="config-group">
@@ -118,8 +138,11 @@ SMS_TEMPLATE_CODE=SMS_123456789
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { api } from '../services/api'
 
 const config = ref({
+  qwen_api_key: '',
+  qwen_endpoint: '',
   wechat_app_id: '',
   wechat_app_secret: '',
   wechat_enabled: false,
@@ -139,16 +162,22 @@ const saving = ref(false)
 const message = ref('')
 const msgType = ref('success')
 
-onMounted(() => {
-  // 尝试从localStorage加载配置（仅用于演示）
-  const saved = localStorage.getItem('social_auth_config')
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved)
-      Object.assign(config.value, parsed)
-      config.value.wechat_enabled = !!config.value.wechat_app_id
-      config.value.alipay_enabled = !!config.value.alipay_app_id
-    } catch {}
+onMounted(async () => {
+  try {
+    const res = await api.get('/settings') // Backend settings
+    if (res.data) {
+      Object.assign(config.value, res.data)
+    }
+    // Also load local storage for social auth (legacy demo)
+    const saved = localStorage.getItem('social_auth_config')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        Object.assign(config.value, parsed)
+      } catch {}
+    }
+  } catch (e) {
+    console.error("Failed to load settings", e)
   }
 })
 
@@ -156,12 +185,18 @@ async function saveConfig() {
   saving.value = true
   message.value = ''
   
-  // 保存到localStorage（演示用）
-  // 实际生产环境应该调用后端API保存配置
   try {
+    // 1. Save Backend Settings
+    await api.post('/settings', {
+      settings: {
+        qwen_api_key: config.value.qwen_api_key,
+        qwen_endpoint: config.value.qwen_endpoint
+      }
+    })
+
+    // 2. Save Local Storage (Social Auth Demo)
     localStorage.setItem('social_auth_config', JSON.stringify(config.value))
-    config.value.wechat_enabled = !!config.value.wechat_app_id
-    config.value.alipay_enabled = !!config.value.alipay_app_id
+    
     message.value = '配置已保存'
     msgType.value = 'success'
   } catch (e) {

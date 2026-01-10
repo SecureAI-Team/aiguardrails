@@ -16,6 +16,7 @@ import (
 	"aiguardrails/internal/audit"
 	"aiguardrails/internal/auth"
 	"aiguardrails/internal/config"
+	"aiguardrails/internal/llm_guard"
 	"aiguardrails/internal/mcp"
 	"aiguardrails/internal/opa"
 	"aiguardrails/internal/org"
@@ -23,6 +24,7 @@ import (
 	"aiguardrails/internal/promptfw"
 	"aiguardrails/internal/rag"
 	"aiguardrails/internal/rbac"
+	"aiguardrails/internal/rules"
 	"aiguardrails/internal/tenant"
 	"aiguardrails/internal/tracing"
 	"aiguardrails/internal/types"
@@ -45,7 +47,7 @@ type Server struct {
 	mcp             *mcp.Broker
 	capStore        *mcp.Store
 	rulesRepo       *policy.RulesRepository
-	ruleStore       *policy.RuleStore
+	ruleStore       rules.Store
 	tenantRuleStore *policy.TenantRuleStore
 	userStore       *auth.UserStore
 	tenantUserStore *auth.TenantUserStore
@@ -53,10 +55,12 @@ type Server struct {
 	smsStore        *auth.SMSStore
 	jwtSigner       *auth.JWTSigner
 	opaEval         *opa.Evaluator
+	llmGuard        *llm_guard.Client
 	alertStore      *alert.RuleStore
 	usageStore      *usage.UsageStore
 	tracingStore    *tracing.Store
 	orgStore        *org.Store
+	settings        *SettingsStore
 }
 
 type ctxKey string
@@ -80,17 +84,28 @@ func New(cfg config.Config, tenantSvc tenant.Service, policyEng policy.Engine, f
 		mcp:             mcpBroker,
 		capStore:        capStore,
 		rulesRepo:       rulesRepo,
-		ruleStore:       ruleStore,
+		ruleStore:       rules.NewMemoryStore(),
 		tenantRuleStore: tenantRuleStore,
 		userStore:       userStore,
 		tenantUserStore: tenantUserStore,
 		jwtSigner:       jwtSigner,
 		opaEval:         opaEval,
+		llmGuard:        llm_guard.NewClient(llm_guard.Config{APIKey: cfg.QwenAPIToken, Endpoint: cfg.QwenAPIBase, Model: cfg.QwenModel}),
 		alertStore:      alertStore,
 		usageStore:      usageStore,
 		tracingStore:    tracingStore,
 		orgStore:        orgStore,
+		settings:        NewSettingsStore(),
 	}
+
+	// Load initial config into settings
+	s.settings.Set("qwen_api_key", cfg.QwenAPIToken)
+
+	// Seed Rules
+	if err := rules.LoadFromJSON("policies/vendor_siemens.json", s.ruleStore); err != nil {
+		fmt.Printf("Warning: Failed to seed rules: %v\n", err)
+	}
+
 	s.routes()
 	return s
 }
@@ -199,9 +214,17 @@ func (s *Server) routes() {
 			if s.rulesRepo != nil && s.ruleStore != nil {
 				s.registerRulesRoutes(r)
 			}
+			// New Rules API
+			r.Route("/rules", func(r chi.Router) {
+				r.Get("/", s.listRules)
+				r.Post("/", s.createRule)
+				r.Delete("/{id}", s.deleteRule)
+			})
 			if s.tenantRuleStore != nil {
 				s.registerTenantRulesRoutes(r)
 			}
+			r.Get("/settings", s.getSettings)
+			r.Post("/settings", s.updateSettings)
 		})
 
 		// Admin via OIDC/JWT (optional, only if OIDC is configured)
@@ -529,6 +552,27 @@ func (s *Server) checkPrompt(w http.ResponseWriter, r *http.Request) {
 		if err == nil && !allow {
 			s.writeJSON(w, http.StatusOK, types.GuardrailResult{Allowed: false, Reason: "opa_block", Signals: []string{fmt.Sprint(data)}})
 			return
+		}
+
+		// LLM Check if enabled (iterate active rules)
+		if s.llmGuard != nil && len(activeRules) > 0 {
+			// Fetch policies to get detailed rule info?
+			// getEffectiveRules only returns IDs.
+			// We need to look up Rule Definitions from s.ruleStore
+			for _, rid := range activeRules {
+				ruleDef, err := s.ruleStore.Get(rid)
+				if err == nil && ruleDef.Type == rules.RuleTypeLLM {
+					safe, reason, err := s.llmGuard.Check(req.Prompt, ruleDef.Content)
+					if err == nil && !safe {
+						s.writeJSON(w, http.StatusOK, types.GuardrailResult{
+							Allowed: false,
+							Reason:  "llm_safety_block",
+							Signals: []string{fmt.Sprintf("rule:%s", ruleDef.Name), reason},
+						})
+						return
+					}
+				}
+			}
 		}
 	}
 	result := s.firewall.CheckPrompt(tenantID, req.Prompt)
