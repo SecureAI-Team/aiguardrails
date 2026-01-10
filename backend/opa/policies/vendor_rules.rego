@@ -104,11 +104,11 @@ deny_reason[msg] {
 }
 
 # Helper functions
-should_check(input, rule_id) {
-  input.mode == "vendor_check"
+should_check(ctx, rule_id) {
+  ctx.mode == "vendor_check"
 }
-should_check(input, rule_id) {
-  input.rules[_] == rule_id
+should_check(ctx, rule_id) {
+  ctx.rules[_] == rule_id
 }
 
 mode_check_output("vendor_check") = true
