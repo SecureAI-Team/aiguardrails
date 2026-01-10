@@ -575,7 +575,11 @@ func (s *Server) checkPrompt(w http.ResponseWriter, r *http.Request) {
 	ruleIDs, keywords := s.resolveRules(tenantID)
 
 	// OPA check if enabled
+	// OPA check if enabled
 	if s.opaEval != nil {
+		fmt.Printf("DEBUG OPA Input: prompt=%q tenant=%s rules=%v\n", req.Prompt, tenantID, ruleIDs)
+		fmt.Printf("DEBUG OPA Modules: %v\n", s.opaEval.Modules())
+
 		allow, data, err := s.opaEval.Decide(r.Context(), opa.Input{
 			TenantID: tenantID,
 			AppID:    auth.AppIDFromContext(r.Context()),
@@ -583,6 +587,8 @@ func (s *Server) checkPrompt(w http.ResponseWriter, r *http.Request) {
 			Prompt:   req.Prompt,
 			Rules:    ruleIDs,
 		})
+		fmt.Printf("DEBUG OPA Result: allow=%v data=%v err=%v\n", allow, data, err)
+
 		if err == nil && !allow {
 			s.writeJSON(w, http.StatusOK, types.GuardrailResult{Allowed: false, Reason: "opa_block", Signals: []string{fmt.Sprint(data)}})
 			return
